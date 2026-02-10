@@ -2697,6 +2697,11 @@ bool GUI_App::OnInit()
 int GUI_App::OnExit()
 {
     stop_http_server();
+#ifdef SLIC3R_MCP_SERVER
+    // Stop MCP server before GUI teardown
+    stop_mcp_server();
+#endif
+
     stop_sync_user_preset();
 
     if (m_device_manager) {
@@ -3381,6 +3386,30 @@ bool GUI_App::on_init_inner()
     // Close the splash now that the main UI is visible.
     if (scrn) { scrn->SetText(_L("Showing main window") + dots, 100); scrn->Destroy(); scrn = nullptr; }
     BOOST_LOG_TRIVIAL(info) << "main frame firstly shown";
+
+#ifdef SLIC3R_MCP_SERVER
+    // Start the MCP server after the main frame is fully initialized (only if --mcp-server flag was passed)
+    start_mcp_server();
+    if (m_mcp_server.is_running()) {
+        // Append to window title to indicate AI control
+        if (mainframe) {
+            wxString title = mainframe->GetTitle();
+            mainframe->SetTitle(title + " [AI Controlled]");
+            mainframe->update_title_colour_after_set_title();
+        }
+        // Show persistent notification after GUI is fully initialized
+        int mcp_port = m_mcp_server.get_port();
+        CallAfter([this, mcp_port]() {
+            if (plater_ && plater_->get_notification_manager()) {
+                plater_->get_notification_manager()->push_notification(
+                    NotificationType::CustomNotification,
+                    NotificationManager::NotificationLevel::WarningNotificationLevel,
+                    _u8L("This OrcaSlicer instance is being controlled by an AI agent (MCP server active on port ")
+                        + std::to_string(mcp_port) + ")");
+            }
+        });
+    }
+#endif
 
 //#if BBL_HAS_FIRST_PAGE
     //BBS: set tp3DEditor firstly
@@ -7662,6 +7691,32 @@ void GUI_App::stop_http_server()
 {
     m_http_server.stop();
 }
+
+#ifdef SLIC3R_MCP_SERVER
+void GUI_App::start_mcp_server()
+{
+    // Only start MCP server if launched with --mcp-server flag
+    if (!init_params || !init_params->mcp_server_mode) {
+        BOOST_LOG_TRIVIAL(info) << "MCP server not requested (use --mcp-server flag to enable)";
+        return;
+    }
+
+    if (!m_mcp_server.is_running()) {
+        int port = MCP::MCP_DEFAULT_PORT;
+        if (app_config && app_config->has("mcp_server_port")) {
+            try {
+                port = std::stoi(app_config->get("mcp_server_port"));
+            } catch (...) {}
+        }
+        m_mcp_server.start(port);
+    }
+}
+
+void GUI_App::stop_mcp_server()
+{
+    m_mcp_server.stop();
+}
+#endif // SLIC3R_MCP_SERVER
 
 void GUI_App::switch_staff_pick(bool on)
 {

@@ -258,6 +258,22 @@ set(SLIC3R_GUI_SOURCES
     GUI/HMSPanel.hpp
     GUI/HttpServer.cpp
     GUI/HttpServer.hpp
+    GUI/MCP/MCPGUIBridge.cpp
+    GUI/MCP/MCPGUIBridge.hpp
+    GUI/MCP/MCPServer.cpp
+    GUI/MCP/MCPServer.hpp
+    GUI/MCP/Tools/PresetTools.cpp
+    GUI/MCP/Tools/PresetTools.hpp
+    GUI/MCP/Tools/ModelTools.cpp
+    GUI/MCP/Tools/ModelTools.hpp
+    GUI/MCP/Tools/SlicingTools.cpp
+    GUI/MCP/Tools/SlicingTools.hpp
+    GUI/MCP/Tools/SceneTools.cpp
+    GUI/MCP/Tools/SceneTools.hpp
+    GUI/MCP/Tools/PresetManagementTools.cpp
+    GUI/MCP/Tools/PresetManagementTools.hpp
+    GUI/MCP/Tools/UITools.cpp
+    GUI/MCP/Tools/UITools.hpp
     GUI/I18N.cpp
     GUI/I18N.hpp
     GUI/DragDropPanel.cpp
@@ -829,6 +845,23 @@ else ()
     add_library(libslic3r_gui STATIC ${SLIC3R_GUI_SOURCES})
 endif ()
 target_include_directories(libslic3r_gui PRIVATE Utils ${CMAKE_CURRENT_BINARY_DIR})
+
+# MCP Server feature toggle
+option(SLIC3R_MCP_SERVER "Enable built-in MCP (Model Context Protocol) server" ON)
+if (SLIC3R_MCP_SERVER)
+    target_compile_definitions(libslic3r_gui PUBLIC SLIC3R_MCP_SERVER)
+    target_include_directories(libslic3r_gui PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/GUI/MCP/vendor/cpp-mcp/include
+        ${CMAKE_CURRENT_SOURCE_DIR}/GUI/MCP/vendor/cpp-mcp/common
+    )
+    # cpp-mcp vendor sources (no #ifdef guard, so only compile when MCP is enabled)
+    target_sources(libslic3r_gui PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/GUI/MCP/vendor/cpp-mcp/src/mcp_server.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/GUI/MCP/vendor/cpp-mcp/src/mcp_tool.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/GUI/MCP/vendor/cpp-mcp/src/mcp_resource.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/GUI/MCP/vendor/cpp-mcp/src/mcp_message.cpp
+    )
+endif()
 
 if (WIN32)
     target_include_directories(libslic3r_gui SYSTEM PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../../deps/WebView2/include)

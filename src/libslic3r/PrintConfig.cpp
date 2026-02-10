@@ -12072,6 +12072,11 @@ CLIMiscConfigDef::CLIMiscConfigDef()
     def->cli_params = "\"filament1.json;filament2.json;...\"";
     def->set_default_value(new ConfigOptionStrings());
 
+    def = this->add("mcp_server", coBool);
+    def->label = L("MCP Server");
+    def->tooltip = L("Start the MCP server for AI agent control.");
+    def->set_default_value(new ConfigOptionBool(false));
+
     def = this->add("downward_check", coBool);
     def->label = L("Downward machines check");
     def->tooltip = L("If enabled, check whether current machine downward compatible with the machines in the list.");
