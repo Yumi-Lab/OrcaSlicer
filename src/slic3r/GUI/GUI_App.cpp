@@ -3389,26 +3389,8 @@ bool GUI_App::on_init_inner()
 
 #ifdef SLIC3R_MCP_SERVER
     // Start the MCP server after the main frame is fully initialized (only if --mcp-server flag was passed)
+    // Visual indicator is handled by GLCanvas3D::_render_mcp_indicator() (persistent ImGui overlay)
     start_mcp_server();
-    if (m_mcp_server.is_running()) {
-        // Append to window title to indicate AI control
-        if (mainframe) {
-            wxString title = mainframe->GetTitle();
-            mainframe->SetTitle(title + " [AI Controlled]");
-            mainframe->update_title_colour_after_set_title();
-        }
-        // Show persistent notification after GUI is fully initialized
-        int mcp_port = m_mcp_server.get_port();
-        CallAfter([this, mcp_port]() {
-            if (plater_ && plater_->get_notification_manager()) {
-                plater_->get_notification_manager()->push_notification(
-                    NotificationType::CustomNotification,
-                    NotificationManager::NotificationLevel::WarningNotificationLevel,
-                    _u8L("This OrcaSlicer instance is being controlled by an AI agent (MCP server active on port ")
-                        + std::to_string(mcp_port) + ")");
-            }
-        });
-    }
 #endif
 
 //#if BBL_HAS_FIRST_PAGE

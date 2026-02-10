@@ -573,6 +573,7 @@ public:
 #ifdef SLIC3R_MCP_SERVER
     void            start_mcp_server();
     void            stop_mcp_server();
+    bool            is_mcp_server_running() const { return m_mcp_server.is_running(); }
 #endif
     void            switch_staff_pick(bool on);
 

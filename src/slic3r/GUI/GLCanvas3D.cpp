@@ -8638,6 +8638,41 @@ void GLCanvas3D::_check_and_update_toolbar_icon_scale()
         wxGetApp().set_auto_toolbar_icon_scale(new_scale);
 }
 
+void GLCanvas3D::_render_mcp_indicator()
+{
+#ifdef SLIC3R_MCP_SERVER
+    if (!wxGetApp().is_mcp_server_running())
+        return;
+
+    ImGuiWrapper& imgui = *wxGetApp().imgui();
+    float scale = get_scale();
+
+    // Semi-transparent dark background with orange accent
+    ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 4.0f * scale);
+    ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(8.0f * scale, 4.0f * scale));
+    ImGui::PushStyleColor(ImGuiCol_WindowBg, ImVec4(0.15f, 0.15f, 0.15f, 0.85f));
+    ImGui::PushStyleColor(ImGuiCol_Border, ImVec4(1.0f, 0.55f, 0.0f, 0.9f));
+    ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 2.0f * scale);
+
+    imgui.set_next_window_pos(10.0f * scale, 10.0f * scale, ImGuiCond_Always, 0.0f, 0.0f);
+
+    if (imgui.begin(wxString("##mcp_indicator"),
+        ImGuiWindowFlags_AlwaysAutoResize |
+        ImGuiWindowFlags_NoMouseInputs |
+        ImGuiWindowFlags_NoMove |
+        ImGuiWindowFlags_NoDecoration |
+        ImGuiWindowFlags_NoFocusOnAppearing |
+        ImGuiWindowFlags_NoNav)) {
+
+        ImGui::TextColored(ImVec4(1.0f, 0.55f, 0.0f, 1.0f), "AI Controlled");
+    }
+    imgui.end();
+
+    ImGui::PopStyleVar(3);
+    ImGui::PopStyleColor(2);
+#endif
+}
+
 void GLCanvas3D::_render_overlays()
 {
     glsafe(::glDisable(GL_DEPTH_TEST));
@@ -8691,6 +8726,9 @@ void GLCanvas3D::_render_overlays()
     _render_3d_navigator();
 
     _render_canvas_toolbar();
+
+    // MCP server indicator (rendered last so it's on top)
+    _render_mcp_indicator();
 }
 
 void GLCanvas3D::_render_style_editor()
