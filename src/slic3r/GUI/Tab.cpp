@@ -25,6 +25,7 @@
 
 #include <boost/algorithm/string/predicate.hpp>
 #include <boost/algorithm/string/replace.hpp>
+#include <nlohmann/json.hpp>
 #include "libslic3r/libslic3r.h"
 #include "slic3r/GUI/OptionsGroup.hpp"
 #include "wxExtensions.hpp"
@@ -1875,6 +1876,8 @@ void Tab::on_value_change(const std::string& opt_key, const boost::any& value)
         m_config->set_key_value("pellet_flow_coefficient", new ConfigOptionFloats{double_value});
     }
 
+    // Interchangeable printhead: handled by switch_printhead_config() via combo handlers
+    // (no longer triggered here — combo handlers call switch_printhead_config directly)
 
     if (opt_key == "single_extruder_multi_material"  ){
         wxGetApp().sidebar().show_SEMM_buttons();
@@ -5094,6 +5097,131 @@ void TabPrinter::build_fff()
         optgroup->append_single_option_line("bed_mesh_probe_distance", "printer_basic_information_adaptive_bed_mesh#probe-point-distance");
         optgroup->append_single_option_line("adaptive_bed_mesh_margin", "printer_basic_information_adaptive_bed_mesh#mesh-margin");
 
+        // Interchangeable printhead section
+        optgroup = page->new_optgroup(L("Interchangeable Printhead"), "param_accessory");
+        create_line_with_widget(optgroup.get(), "curr_print_head", "", [this](wxWindow* parent) {
+            m_print_head_combo = new wxComboBox(parent, wxID_ANY, wxEmptyString, wxDefaultPosition, wxSize(FromDIP(200), -1), 0, nullptr, wxCB_READONLY);
+            m_print_head_combo->Bind(wxEVT_COMBOBOX, [this](wxCommandEvent&) {
+                std::string sel = m_print_head_combo->GetStringSelection().ToUTF8().data();
+                if (!sel.empty() && sel != m_config->opt_string("curr_print_head")) {
+                    switch_printhead_config(sel, "");  // switch head, keep current hotend
+                }
+                update_printhead_delete_buttons();
+            });
+            m_btn_add_head = new wxButton(parent, wxID_ANY, "+", wxDefaultPosition, wxSize(FromDIP(24), FromDIP(24)));
+            m_btn_add_head->SetToolTip(_L("Add a custom print head"));
+            m_btn_add_head->Bind(wxEVT_BUTTON, [this](wxCommandEvent&) {
+                wxTextEntryDialog dlg(this, _L("Enter new print head name:"), _L("Add Print Head"));
+                if (dlg.ShowModal() == wxID_OK) {
+                    std::string name = dlg.GetValue().ToUTF8().data();
+                    if (name.empty()) return;
+                    auto* heads = m_config->option<ConfigOptionStrings>("available_print_heads", true);
+                    if (std::find(heads->values.begin(), heads->values.end(), name) != heads->values.end()) {
+                        wxMessageBox(_L("This print head name already exists."), _L("Warning"));
+                        return;
+                    }
+                    DynamicPrintConfig new_conf = *m_config;
+                    auto new_heads = heads->values;
+                    new_heads.push_back(name);
+                    new_conf.set_key_value("available_print_heads", new ConfigOptionStrings(new_heads));
+                    load_config(new_conf);
+                    update_dirty();
+                    update_printhead_combos();
+                    wxGetApp().plater()->sidebar().update_printhead_sidebar_combos();
+                }
+            });
+            m_btn_del_head = new wxButton(parent, wxID_ANY, wxString::FromUTF8("\xE2\x9C\x95"), wxDefaultPosition, wxSize(FromDIP(24), FromDIP(24)));
+            m_btn_del_head->SetToolTip(_L("Remove selected custom print head"));
+            m_btn_del_head->Hide();
+            m_btn_del_head->Bind(wxEVT_BUTTON, [this](wxCommandEvent&) {
+                std::string sel = m_print_head_combo->GetStringSelection().ToUTF8().data();
+                if (sel.empty()) return;
+                if (wxMessageBox(wxString::Format(_L("Remove print head '%s'?"), sel), _L("Confirm"),
+                                 wxYES_NO | wxICON_QUESTION, this) != wxYES)
+                    return;
+                auto* heads = m_config->option<ConfigOptionStrings>("available_print_heads", true);
+                DynamicPrintConfig new_conf = *m_config;
+                auto new_heads = heads->values;
+                new_heads.erase(std::remove(new_heads.begin(), new_heads.end(), sel), new_heads.end());
+                new_conf.set_key_value("available_print_heads", new ConfigOptionStrings(new_heads));
+                load_config(new_conf);
+                update_dirty();
+                if (!new_heads.empty())
+                    switch_printhead_config(new_heads.front(), "");
+                else {
+                    update_printhead_combos();
+                    update_printhead_delete_buttons();
+                    wxGetApp().plater()->sidebar().update_printhead_sidebar_combos();
+                }
+            });
+            auto sizer = new wxBoxSizer(wxHORIZONTAL);
+            sizer->Add(m_print_head_combo, 0, wxALIGN_CENTER_VERTICAL);
+            sizer->Add(m_btn_add_head, 0, wxALIGN_CENTER_VERTICAL | wxLEFT, FromDIP(4));
+            sizer->Add(m_btn_del_head, 0, wxALIGN_CENTER_VERTICAL | wxLEFT, FromDIP(2));
+            return sizer;
+        });
+        create_line_with_widget(optgroup.get(), "curr_hotend", "", [this](wxWindow* parent) {
+            m_hotend_combo = new wxComboBox(parent, wxID_ANY, wxEmptyString, wxDefaultPosition, wxSize(FromDIP(200), -1), 0, nullptr, wxCB_READONLY);
+            m_hotend_combo->Bind(wxEVT_COMBOBOX, [this](wxCommandEvent&) {
+                std::string sel = m_hotend_combo->GetStringSelection().ToUTF8().data();
+                if (!sel.empty() && sel != m_config->opt_string("curr_hotend")) {
+                    switch_printhead_config("", sel);  // keep current head, switch hotend
+                }
+                update_printhead_delete_buttons();
+            });
+            m_btn_add_hotend = new wxButton(parent, wxID_ANY, "+", wxDefaultPosition, wxSize(FromDIP(24), FromDIP(24)));
+            m_btn_add_hotend->SetToolTip(_L("Add a custom hotend"));
+            m_btn_add_hotend->Bind(wxEVT_BUTTON, [this](wxCommandEvent&) {
+                wxTextEntryDialog dlg(this, _L("Enter new hotend name:"), _L("Add Hotend"));
+                if (dlg.ShowModal() == wxID_OK) {
+                    std::string name = dlg.GetValue().ToUTF8().data();
+                    if (name.empty()) return;
+                    auto* hotends = m_config->option<ConfigOptionStrings>("available_hotends", true);
+                    if (std::find(hotends->values.begin(), hotends->values.end(), name) != hotends->values.end()) {
+                        wxMessageBox(_L("This hotend name already exists."), _L("Warning"));
+                        return;
+                    }
+                    DynamicPrintConfig new_conf = *m_config;
+                    auto new_hotends = hotends->values;
+                    new_hotends.push_back(name);
+                    new_conf.set_key_value("available_hotends", new ConfigOptionStrings(new_hotends));
+                    load_config(new_conf);
+                    update_dirty();
+                    update_printhead_combos();
+                    wxGetApp().plater()->sidebar().update_printhead_sidebar_combos();
+                }
+            });
+            m_btn_del_hotend = new wxButton(parent, wxID_ANY, wxString::FromUTF8("\xE2\x9C\x95"), wxDefaultPosition, wxSize(FromDIP(24), FromDIP(24)));
+            m_btn_del_hotend->SetToolTip(_L("Remove selected custom hotend"));
+            m_btn_del_hotend->Hide();
+            m_btn_del_hotend->Bind(wxEVT_BUTTON, [this](wxCommandEvent&) {
+                std::string sel = m_hotend_combo->GetStringSelection().ToUTF8().data();
+                if (sel.empty()) return;
+                if (wxMessageBox(wxString::Format(_L("Remove hotend '%s'?"), sel), _L("Confirm"),
+                                 wxYES_NO | wxICON_QUESTION, this) != wxYES)
+                    return;
+                auto* hotends = m_config->option<ConfigOptionStrings>("available_hotends", true);
+                DynamicPrintConfig new_conf = *m_config;
+                auto new_hotends = hotends->values;
+                new_hotends.erase(std::remove(new_hotends.begin(), new_hotends.end(), sel), new_hotends.end());
+                new_conf.set_key_value("available_hotends", new ConfigOptionStrings(new_hotends));
+                load_config(new_conf);
+                update_dirty();
+                if (!new_hotends.empty())
+                    switch_printhead_config("", new_hotends.front());
+                else {
+                    update_printhead_combos();
+                    update_printhead_delete_buttons();
+                    wxGetApp().plater()->sidebar().update_printhead_sidebar_combos();
+                }
+            });
+            auto sizer = new wxBoxSizer(wxHORIZONTAL);
+            sizer->Add(m_hotend_combo, 0, wxALIGN_CENTER_VERTICAL);
+            sizer->Add(m_btn_add_hotend, 0, wxALIGN_CENTER_VERTICAL | wxLEFT, FromDIP(4));
+            sizer->Add(m_btn_del_hotend, 0, wxALIGN_CENTER_VERTICAL | wxLEFT, FromDIP(2));
+            return sizer;
+        });
+
         optgroup = page->new_optgroup(L("Accessory"), "param_accessory");
         optgroup->append_single_option_line("nozzle_type", "printer_basic_information_accessory#nozzle-type");
         optgroup->append_single_option_line("nozzle_hrc", "printer_basic_information_accessory#nozzle-hrc");
@@ -5836,6 +5964,26 @@ void TabPrinter::on_preset_loaded()
     if (auto *nozzle_volume_type = m_preset_bundle->project_config.option<ConfigOptionEnumsGeneric>("nozzle_volume_type"))
         for (size_t idx = 0; idx < nozzle_volume_type->values.size(); ++idx)
             updateNozzleCountDisplay(m_preset_bundle, idx, NozzleVolumeType(nozzle_volume_type->values[idx]));
+
+    // Update interchangeable printhead combos and apply head/hotend sub-profile
+    update_printhead_combos();
+
+    // Clear any user deltas from previous session — a fresh preset load means clean state.
+    // Deltas only persist across head/hotend switches within the same editing session.
+    if (m_config->has("support_interchangeable_printhead") &&
+        m_config->opt_bool("support_interchangeable_printhead")) {
+        std::string pname = m_presets->get_selected_preset_name();
+        auto& obj = wxGetApp().app_config->get_printer_settings_object(pname);
+        std::vector<std::string> delta_keys;
+        for (auto it = obj.begin(); it != obj.end(); ++it) {
+            if (it.key().rfind("head_delta.", 0) == 0 || it.key().rfind("hotend_delta.", 0) == 0)
+                delta_keys.push_back(it.key());
+        }
+        for (const auto& k : delta_keys)
+            wxGetApp().app_config->set_printer_setting(pname, k, "{}");
+    }
+
+    switch_printhead_config("", "");  // apply official values for current head/hotend
 }
 
 void TabPrinter::update_pages()
@@ -5894,12 +6042,307 @@ void TabPrinter::activate_selected_page(std::function<void()> throw_if_canceled)
     // so update it implicitly
     if (m_active_page && m_active_page->title() == "Multimaterial")
         m_active_page->set_value("extruders_count", int(m_extruders_count));
+
+    // Populate interchangeable printhead combos now that widgets are activated
+    if (m_print_head_combo && m_print_head_combo->GetCount() == 0)
+        update_printhead_combos();
 }
 
 void TabPrinter::clear_pages()
 {
     Tab::clear_pages();
     m_reset_to_filament_color = nullptr;
+    m_print_head_combo = nullptr;
+    m_hotend_combo = nullptr;
+}
+
+void TabPrinter::update_printhead_combos()
+{
+    if (!m_config->has("support_interchangeable_printhead") ||
+        !m_config->opt_bool("support_interchangeable_printhead"))
+        return;
+
+    // Populate print head combo
+    if (m_print_head_combo) {
+        m_print_head_combo->Clear();
+        auto* heads = m_config->option<ConfigOptionStrings>("available_print_heads");
+        if (heads) {
+            for (const auto& h : heads->values)
+                m_print_head_combo->Append(wxString::FromUTF8(h));
+        }
+        std::string curr = m_config->opt_string("curr_print_head");
+        if (curr.empty() && m_config->has("default_print_head"))
+            curr = m_config->opt_string("default_print_head");
+        if (!curr.empty())
+            m_print_head_combo->SetStringSelection(wxString::FromUTF8(curr));
+        else if (m_print_head_combo->GetCount() > 0)
+            m_print_head_combo->SetSelection(0);
+    }
+
+    // Populate hotend combo
+    if (m_hotend_combo) {
+        m_hotend_combo->Clear();
+        auto* hotends = m_config->option<ConfigOptionStrings>("available_hotends");
+        if (hotends) {
+            for (const auto& h : hotends->values)
+                m_hotend_combo->Append(wxString::FromUTF8(h));
+        }
+        std::string curr = m_config->opt_string("curr_hotend");
+        if (curr.empty() && m_config->has("default_hotend"))
+            curr = m_config->opt_string("default_hotend");
+        if (!curr.empty())
+            m_hotend_combo->SetStringSelection(wxString::FromUTF8(curr));
+        else if (m_hotend_combo->GetCount() > 0)
+            m_hotend_combo->SetSelection(0);
+    }
+
+    update_printhead_delete_buttons();
+}
+
+void TabPrinter::update_printhead_delete_buttons()
+{
+    // Show delete button only when the currently selected head/hotend is NOT in the system preset
+    auto get_system_list = [this](const std::string& key) -> std::vector<std::string> {
+        const Preset* parent = wxGetApp().preset_bundle->printers.get_selected_preset_parent();
+        if (parent && parent->config.has(key)) {
+            auto* opt = parent->config.option<ConfigOptionStrings>(key);
+            if (opt) return opt->values;
+        }
+        // Fallback: use current config's list (treat all as system — safer than showing delete)
+        if (m_config->has(key)) {
+            auto* opt = m_config->option<ConfigOptionStrings>(key);
+            if (opt) return opt->values;
+        }
+        return {};
+    };
+
+    if (m_btn_del_head && m_print_head_combo) {
+        std::string sel = m_print_head_combo->GetStringSelection().ToUTF8().data();
+        auto sys_heads = get_system_list("available_print_heads");
+        bool is_custom = !sel.empty() &&
+                         std::find(sys_heads.begin(), sys_heads.end(), sel) == sys_heads.end();
+        m_btn_del_head->Show(is_custom);
+        m_btn_del_head->GetParent()->Layout();
+    }
+
+    if (m_btn_del_hotend && m_hotend_combo) {
+        std::string sel = m_hotend_combo->GetStringSelection().ToUTF8().data();
+        auto sys_hotends = get_system_list("available_hotends");
+        bool is_custom = !sel.empty() &&
+                         std::find(sys_hotends.begin(), sys_hotends.end(), sel) == sys_hotends.end();
+        m_btn_del_hotend->Show(is_custom);
+        m_btn_del_hotend->GetParent()->Layout();
+    }
+}
+
+void TabPrinter::apply_printhead_overrides()
+{
+    // Deprecated — kept for backward compatibility. Use switch_printhead_config() instead.
+    if (!m_config->has("support_interchangeable_printhead") ||
+        !m_config->opt_bool("support_interchangeable_printhead"))
+        return;
+    // Delegate to the new sub-profile system
+    switch_printhead_config("", "");
+}
+
+// --- Interchangeable Printhead Sub-Profile System ---
+
+// Keys tied to the print head (retraction, wipe, z-hop, filament change gcode)
+static const std::set<std::string> HEAD_TIED_KEYS = {
+    "retraction_length", "retraction_speed", "deretraction_speed",
+    "retract_restart_extra", "retract_before_wipe",
+    "retract_when_changing_layer", "retraction_minimum_travel",
+    "wipe", "wipe_distance",
+    "z_hop", "z_hop_types", "travel_slope",
+    "long_retractions_when_cut", "retraction_distances_when_cut",
+    "retract_length_toolchange", "retract_restart_extra_toolchange",
+    "change_filament_gcode"
+};
+
+// Keys tied to the hotend (volumetric speed)
+static const std::set<std::string> HOTEND_TIED_KEYS = {
+    "hotend_max_volumetric_speed"
+};
+
+// Helper: apply JSON map values to a DynamicPrintConfig, optionally filtered by allowed keys
+static void apply_json_map_to_config(DynamicPrintConfig& conf, const nlohmann::json& map,
+                                      const std::set<std::string>& allowed_keys = {})
+{
+    for (auto& [k, v] : map.items()) {
+        if (!allowed_keys.empty() && allowed_keys.count(k) == 0)
+            continue;
+        try {
+            if (v.is_array()) {
+                std::string val_str;
+                for (size_t i = 0; i < v.size(); ++i) {
+                    if (i > 0) val_str += ";";
+                    val_str += v[i].get<std::string>();
+                }
+                conf.set_deserialize_strict(k, val_str);
+            } else if (v.is_string()) {
+                conf.set_deserialize_strict(k, v.get<std::string>());
+            }
+        } catch (const std::exception& e) {
+            BOOST_LOG_TRIVIAL(warning) << "Printhead config: failed to apply '" << k << "': " << e.what();
+        }
+    }
+}
+
+void TabPrinter::switch_printhead_config(const std::string& new_head, const std::string& new_hotend)
+{
+    if (m_in_switch_printhead)
+        return;
+    if (!m_config->has("support_interchangeable_printhead") ||
+        !m_config->opt_bool("support_interchangeable_printhead"))
+        return;
+
+    std::string old_head   = m_config->opt_string("curr_print_head");
+    std::string old_hotend = m_config->opt_string("curr_hotend");
+    std::string eff_head   = new_head.empty()   ? old_head   : new_head;
+    std::string eff_hotend = new_hotend.empty()  ? old_hotend : new_hotend;
+
+    if (eff_head.empty() && eff_hotend.empty())
+        return;
+
+    m_in_switch_printhead = true;
+    std::string preset_name = m_presets->get_selected_preset_name();
+    Preset& selected = m_presets->get_selected_preset();
+    bool head_changed   = (eff_head   != old_head);
+    bool hotend_changed = (eff_hotend != old_hotend);
+
+    BOOST_LOG_TRIVIAL(info) << "switch_printhead_config: " << old_head << " -> " << eff_head
+        << ", " << old_hotend << " -> " << eff_hotend;
+
+    // ---- Phase 1: Save user deltas for outgoing head/hotend ----
+    // Delta = diff between edited config and selected baseline (official values)
+    auto save_delta = [&](const std::set<std::string>& tied_keys, const std::string& delta_key) {
+        nlohmann::json delta = nlohmann::json::object();
+        for (const auto& key : tied_keys) {
+            const ConfigOption* edited_opt   = m_config->option(key);
+            const ConfigOption* selected_opt = selected.config.option(key);
+            if (!edited_opt || !selected_opt) continue;
+            std::string edited_val   = edited_opt->serialize();
+            std::string selected_val = selected_opt->serialize();
+            if (edited_val != selected_val)
+                delta[key] = edited_val;
+        }
+        wxGetApp().app_config->set_printer_setting(preset_name, delta_key, delta.dump());
+    };
+
+    if (head_changed && !old_head.empty())
+        save_delta(HEAD_TIED_KEYS, "head_delta." + old_head);
+    if (hotend_changed && !old_hotend.empty())
+        save_delta(HOTEND_TIED_KEYS, "hotend_delta." + old_hotend);
+
+    // ---- Phase 2: Build official config for new head/hotend ----
+    DynamicPrintConfig override_conf;
+    override_conf.set_key_value("curr_print_head", new ConfigOptionString(eff_head));
+    override_conf.set_key_value("curr_hotend",     new ConfigOptionString(eff_hotend));
+
+    // Reset ALL tied keys to selected baseline (clears any user modifications from old combo)
+    for (const auto& key : HEAD_TIED_KEYS) {
+        const ConfigOption* opt = selected.config.option(key);
+        if (opt) override_conf.set_key_value(key, opt->clone());
+    }
+    for (const auto& key : HOTEND_TIED_KEYS) {
+        const ConfigOption* opt = selected.config.option(key);
+        if (opt) override_conf.set_key_value(key, opt->clone());
+    }
+
+    // Apply official head settings from new-format JSON (printhead_settings)
+    bool has_new_format = false;
+    if (m_config->has("printhead_settings")) {
+        std::string json_str = m_config->opt_string("printhead_settings");
+        if (!json_str.empty() && json_str != "{}") {
+            try {
+                auto settings = nlohmann::json::parse(json_str);
+                if (settings.contains(eff_head) && settings[eff_head].is_object()) {
+                    apply_json_map_to_config(override_conf, settings[eff_head], HEAD_TIED_KEYS);
+                    has_new_format = true;
+                }
+            } catch (const std::exception& e) {
+                BOOST_LOG_TRIVIAL(error) << "Failed to parse printhead_settings JSON: " << e.what();
+            }
+        }
+    }
+
+    // Apply official hotend settings from new-format JSON (hotend_settings)
+    if (m_config->has("hotend_settings")) {
+        std::string json_str = m_config->opt_string("hotend_settings");
+        if (!json_str.empty() && json_str != "{}") {
+            try {
+                auto settings = nlohmann::json::parse(json_str);
+                if (settings.contains(eff_hotend) && settings[eff_hotend].is_object()) {
+                    apply_json_map_to_config(override_conf, settings[eff_hotend], HOTEND_TIED_KEYS);
+                    has_new_format = true;
+                }
+            } catch (const std::exception& e) {
+                BOOST_LOG_TRIVIAL(error) << "Failed to parse hotend_settings JSON: " << e.what();
+            }
+        }
+    }
+
+    // Legacy fallback: old printhead_overrides format (combined "head:hotend" keys)
+    if (!has_new_format && m_config->has("printhead_overrides")) {
+        std::string json_str = m_config->opt_string("printhead_overrides");
+        if (!json_str.empty() && json_str != "{}") {
+            try {
+                auto overrides = nlohmann::json::parse(json_str);
+                std::string combo_key = eff_head + ":" + eff_hotend;
+                if (overrides.contains(combo_key) && overrides[combo_key].is_object()) {
+                    apply_json_map_to_config(override_conf, overrides[combo_key]);
+                }
+            } catch (const std::exception& e) {
+                BOOST_LOG_TRIVIAL(error) << "Failed to parse printhead_overrides JSON: " << e.what();
+            }
+        }
+    }
+
+    // ---- Phase 3: Update selected preset baseline to match official values ----
+    for (const auto& key : HEAD_TIED_KEYS) {
+        const ConfigOption* opt = override_conf.option(key);
+        if (opt) selected.config.set_key_value(key, opt->clone());
+    }
+    for (const auto& key : HOTEND_TIED_KEYS) {
+        const ConfigOption* opt = override_conf.option(key);
+        if (opt) selected.config.set_key_value(key, opt->clone());
+    }
+    selected.config.set_key_value("curr_print_head", new ConfigOptionString(eff_head));
+    selected.config.set_key_value("curr_hotend",     new ConfigOptionString(eff_hotend));
+
+    // ---- Phase 4: Restore user deltas for incoming head/hotend ----
+    // Deltas are applied ONLY to override_conf (not selected), creating dirty diff
+    auto restore_delta = [&](const std::set<std::string>& tied_keys, const std::string& delta_key) {
+        std::string delta_str = wxGetApp().app_config->get_printer_setting(preset_name, delta_key);
+        if (delta_str.empty() || delta_str == "{}") return;
+        try {
+            auto delta = nlohmann::json::parse(delta_str);
+            for (auto& [k, v] : delta.items()) {
+                if (tied_keys.count(k) == 0) continue;
+                try {
+                    override_conf.set_deserialize_strict(k, v.get<std::string>());
+                } catch (...) {}
+            }
+        } catch (...) {}
+    };
+
+    restore_delta(HEAD_TIED_KEYS,   "head_delta."   + eff_head);
+    restore_delta(HOTEND_TIED_KEYS, "hotend_delta." + eff_hotend);
+
+    // ---- Phase 5: Apply to edited config and refresh UI ----
+    load_config(override_conf);  // sets edited config, calls update_dirty()
+
+    m_presets->update_saved_preset_from_current_preset();
+
+    // Persist current selections
+    wxGetApp().app_config->set_printer_setting(preset_name, "curr_print_head", eff_head);
+    wxGetApp().app_config->set_printer_setting(preset_name, "curr_hotend", eff_hotend);
+
+    // Refresh UI
+    update_printhead_combos();
+    update_printhead_delete_buttons();
+    wxGetApp().plater()->sidebar().update_printhead_sidebar_combos();
+    m_in_switch_printhead = false;
 }
 
 std::vector<InputShaperType> input_shaper_types_for_flavor(GCodeFlavor flavor)
@@ -6057,6 +6500,18 @@ void TabPrinter::toggle_options()
         // The cooling filter and air filtration are alternative accessories: show only the one the printer supports.
         toggle_line("support_air_filtration", !m_config->opt_bool("support_cooling_filter"));
         toggle_line("cooling_filter_enabled", m_config->opt_bool("support_cooling_filter"));
+
+        // Interchangeable printhead: only show for printers that declare support
+        bool has_interchangeable_head = m_config->has("support_interchangeable_printhead") &&
+                                        m_config->opt_bool("support_interchangeable_printhead");
+        toggle_line("curr_print_head", has_interchangeable_head);
+        toggle_line("curr_hotend", has_interchangeable_head);
+
+        // Re-apply delete button visibility after toggle_line, because
+        // ShowItems(true) on the widget_sizer re-shows all children including
+        // hidden delete buttons.
+        if (has_interchangeable_head)
+            update_printhead_delete_buttons();
     }
 
 

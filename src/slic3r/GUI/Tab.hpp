@@ -22,6 +22,7 @@
 #include <wx/sizer.h>
 #include <wx/bmpcbox.h>
 #include <wx/bmpbuttn.h>
+#include <wx/combobox.h>
 #include <wx/treectrl.h>
 #include <wx/imaglist.h>
 
@@ -641,6 +642,19 @@ public:
 	size_t		m_cache_extruder_count = 0;
 	std::vector<std::string> m_extruder_variant_list;
 	std::string m_base_preset_name;
+
+	// Interchangeable printhead support
+	wxComboBox*	m_print_head_combo{nullptr};
+	wxComboBox*	m_hotend_combo{nullptr};
+	wxButton*	m_btn_add_head{nullptr};
+	wxButton*	m_btn_add_hotend{nullptr};
+	wxButton*	m_btn_del_head{nullptr};
+	wxButton*	m_btn_del_hotend{nullptr};
+	void		apply_printhead_overrides();  // deprecated — legacy fallback
+	void		switch_printhead_config(const std::string& new_head, const std::string& new_hotend);
+	bool		m_in_switch_printhead{false}; // re-entrance guard
+	void		update_printhead_delete_buttons();
+	void		update_printhead_combos();
 
     PrinterTechnology               m_printer_technology = ptFFF;
 

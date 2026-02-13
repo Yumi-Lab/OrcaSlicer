@@ -1431,7 +1431,12 @@ static std::vector<std::string> s_Preset_printer_options {
     // Fast-purge printer flag + device/firmware-facing per-variant extruder-change
     // deretraction speed (unconsumed by the slicer; carried by H2D/A2L/X2D/P2S machine profiles).
     "support_fast_purge_mode", "deretract_speed_extruder_change",
-    "printer_plugin_config_overrides"
+    "printer_plugin_config_overrides",
+    // Yumi: interchangeable printhead / hotend sub-profiles
+    "support_interchangeable_printhead", "available_print_heads", "available_hotends",
+    "curr_print_head", "curr_hotend", "printhead_overrides",
+    "printhead_settings", "hotend_settings",
+    "default_print_head", "default_hotend", "hotend_max_volumetric_speed"
     };
 
 static std::vector<std::string> s_Preset_sla_print_options {

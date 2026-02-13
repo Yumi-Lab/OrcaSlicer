@@ -4271,6 +4271,82 @@ void PrintConfigDef::init_fff_params()
     def->mode = comSimple;
     def->set_default_value(new ConfigOptionBool(false));
 
+    // Interchangeable printhead system
+    def = this->add("support_interchangeable_printhead", coBool);
+    def->label = L("Support interchangeable printhead");
+    def->tooltip = L("Enable this if the printer supports interchangeable print head blocks (e.g. Bowden/Direct Drive heads with different hotend types).");
+    def->mode = comDevelop;
+    def->set_default_value(new ConfigOptionBool(false));
+
+    def = this->add("available_print_heads", coStrings);
+    def->label = L("Available print heads");
+    def->tooltip = L("List of available interchangeable print head block names.");
+    def->mode = comDevelop;
+    def->set_default_value(new ConfigOptionStrings{});
+    def->cli = ConfigOptionDef::nocli;
+
+    def = this->add("available_hotends", coStrings);
+    def->label = L("Available hotends");
+    def->tooltip = L("List of available hotend types for the current printer.");
+    def->mode = comDevelop;
+    def->set_default_value(new ConfigOptionStrings{});
+    def->cli = ConfigOptionDef::nocli;
+
+    def = this->add("curr_print_head", coString);
+    def->label = L("Print head");
+    def->tooltip = L("Currently selected interchangeable print head block.");
+    def->mode = comSimple;
+    def->set_default_value(new ConfigOptionString(""));
+
+    def = this->add("curr_hotend", coString);
+    def->label = L("Hotend");
+    def->tooltip = L("Currently selected hotend type.");
+    def->mode = comSimple;
+    def->set_default_value(new ConfigOptionString(""));
+
+    def = this->add("printhead_overrides", coString);
+    def->label = L("Printhead config overrides");
+    def->tooltip = L("JSON-encoded map of config overrides per head+hotend combination. Deprecated: use printhead_settings + hotend_settings instead.");
+    def->mode = comDevelop;
+    def->set_default_value(new ConfigOptionString("{}"));
+    def->cli = ConfigOptionDef::nocli;
+
+    def = this->add("printhead_settings", coString);
+    def->label = L("Printhead settings");
+    def->tooltip = L("JSON map of config settings per print head type (retraction, wipe, z-hop).");
+    def->mode = comDevelop;
+    def->set_default_value(new ConfigOptionString("{}"));
+    def->cli = ConfigOptionDef::nocli;
+
+    def = this->add("hotend_settings", coString);
+    def->label = L("Hotend settings");
+    def->tooltip = L("JSON map of config settings per hotend type (volumetric speed).");
+    def->mode = comDevelop;
+    def->set_default_value(new ConfigOptionString("{}"));
+    def->cli = ConfigOptionDef::nocli;
+
+    def = this->add("default_print_head", coString);
+    def->label = L("Default print head");
+    def->tooltip = L("Default print head block for this printer.");
+    def->mode = comDevelop;
+    def->set_default_value(new ConfigOptionString(""));
+    def->cli = ConfigOptionDef::nocli;
+
+    def = this->add("default_hotend", coString);
+    def->label = L("Default hotend");
+    def->tooltip = L("Default hotend type for this printer.");
+    def->mode = comDevelop;
+    def->set_default_value(new ConfigOptionString(""));
+    def->cli = ConfigOptionDef::nocli;
+
+    def = this->add("hotend_max_volumetric_speed", coFloat);
+    def->label = L("Hotend max volumetric speed");
+    def->tooltip = L("Maximum volumetric speed the current hotend can handle. If set to a value greater than 0, this will limit the volumetric speed regardless of filament settings.");
+    def->sidetext = L("mm\u00b3/s");
+    def->min = 0;
+    def->mode = comAdvanced;
+    def->set_default_value(new ConfigOptionFloat(0));
+
     def = this->add("gcode_label_objects", coBool);
     def->label = L("Label objects");
     def->tooltip = L("Enable this to add comments into the G-code labeling print moves with what object they belong to,"
