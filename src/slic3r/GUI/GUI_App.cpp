@@ -7691,6 +7691,10 @@ void GUI_App::start_mcp_server()
             } catch (...) {}
         }
         m_mcp_server.start(port);
+        if (m_mcp_server.is_running() && mainframe && mainframe->m_mcp_label) {
+            mainframe->m_mcp_label->Show(true);
+            mainframe->m_mcp_label->GetParent()->Layout();
+        }
     }
 }
 

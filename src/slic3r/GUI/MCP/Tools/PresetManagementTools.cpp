@@ -18,6 +18,15 @@
 
 namespace Slic3r { namespace GUI { namespace MCP {
 
+// Helper: wrap a JSON object as a proper MCP content block array
+static mcp::json make_text_result(const mcp::json& data)
+{
+    return mcp::json::array({{
+        {"type", "text"},
+        {"text", data.dump(2)}
+    }});
+}
+
 // Helper to get preset collection by category
 static PresetCollection* get_collection(const std::string& category) {
     auto* preset_bundle = GUI::wxGetApp().preset_bundle;
@@ -115,7 +124,9 @@ void register_preset_management_tools(mcp::server& srv)
                 10000
             );
 
-            return result.value_or(mcp::json{{"error", "Timeout"}});
+            if (!result.has_value())
+                throw mcp::mcp_exception(mcp::error_code::internal_error, "GUI bridge timeout");
+            return make_text_result(result.value());
         });
     }
 
@@ -159,7 +170,9 @@ void register_preset_management_tools(mcp::server& srv)
                 10000
             );
 
-            return result.value_or(mcp::json{{"error", "Timeout"}});
+            if (!result.has_value())
+                throw mcp::mcp_exception(mcp::error_code::internal_error, "GUI bridge timeout");
+            return make_text_result(result.value());
         });
     }
 
@@ -212,7 +225,9 @@ void register_preset_management_tools(mcp::server& srv)
                 10000
             );
 
-            return result.value_or(mcp::json{{"error", "Timeout"}});
+            if (!result.has_value())
+                throw mcp::mcp_exception(mcp::error_code::internal_error, "GUI bridge timeout");
+            return make_text_result(result.value());
         });
     }
 
@@ -271,7 +286,9 @@ void register_preset_management_tools(mcp::server& srv)
                 10000
             );
 
-            return result.value_or(mcp::json{{"error", "Timeout"}});
+            if (!result.has_value())
+                throw mcp::mcp_exception(mcp::error_code::internal_error, "GUI bridge timeout");
+            return make_text_result(result.value());
         });
     }
 
@@ -355,7 +372,9 @@ void register_preset_management_tools(mcp::server& srv)
                 10000
             );
 
-            return result.value_or(mcp::json{{"error", "Timeout"}});
+            if (!result.has_value())
+                throw mcp::mcp_exception(mcp::error_code::internal_error, "GUI bridge timeout");
+            return make_text_result(result.value());
         });
     }
 
@@ -396,7 +415,9 @@ void register_preset_management_tools(mcp::server& srv)
                 5000
             );
 
-            return result.value_or(mcp::json{{"error", "Timeout"}});
+            if (!result.has_value())
+                throw mcp::mcp_exception(mcp::error_code::internal_error, "GUI bridge timeout");
+            return make_text_result(result.value());
         });
     }
 

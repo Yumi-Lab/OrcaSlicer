@@ -65,6 +65,7 @@
 #include "Widgets/WebView.hpp"
 #include "DailyTips.hpp"
 #include "FilamentMapDialog.hpp"
+#include "Widgets/Label.hpp"
 
 #include "DeviceCore/DevManager.h"
 
@@ -1848,6 +1849,15 @@ wxBoxSizer* MainFrame::create_side_tools()
     update_side_button_style();
     m_slice_option_btn->Enable();
     m_print_option_btn->Enable();
+#ifdef SLIC3R_MCP_SERVER
+    // MCP "AI Controlled" indicator - shown only when MCP server is running
+    m_mcp_label = new wxStaticText(this, wxID_ANY, "AI Controlled", wxDefaultPosition, wxDefaultSize, wxALIGN_CENTER_HORIZONTAL);
+    m_mcp_label->SetFont(Label::Body_12);
+    m_mcp_label->SetForegroundColour(wxColour(180, 180, 180));
+    m_mcp_label->SetBackgroundColour(wxColour(55, 55, 55));
+    m_mcp_label->Show(wxGetApp().is_mcp_server_running());
+    sizer->Add(m_mcp_label, 0, wxALIGN_CENTER_VERTICAL | wxLEFT, FromDIP(8));
+#endif
     //sizer->Add(FromDIP(15), 0, 0, 0, 0);
     sizer->Add(slice_panel);
     sizer->Add(FromDIP(15), 0, 0, 0, 0);

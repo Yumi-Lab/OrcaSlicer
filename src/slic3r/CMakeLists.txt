@@ -802,6 +802,8 @@ if (APPLE)
             GUI/GUI_UtilsMac.mm
             GUI/wxMediaCtrl2.mm
             GUI/wxMediaCtrl2.h
+            GUI/MacScreenshot.mm
+            GUI/MacScreenshot.h
         )
     FIND_LIBRARY(DISKARBITRATION_LIBRARY DiskArbitration)
 else ()

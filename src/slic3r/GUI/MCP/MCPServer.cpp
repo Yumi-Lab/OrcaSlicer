@@ -113,7 +113,7 @@ void MCPServer::register_tools()
     // Phase 3: UI Tools - screenshot, camera, tab navigation, app status (5 tools)
     register_ui_tools(*m_server);
 
-    BOOST_LOG_TRIVIAL(info) << "MCP: All tools registered (31 tools total)";
+    BOOST_LOG_TRIVIAL(info) << "MCP: All tools registered (33 tools total)";
 }
 
 void MCPServer::register_resources()
@@ -172,6 +172,10 @@ slice models into G-code, manage presets, and control the 3D viewport.
 - `get_current_tab` / `get_app_status` - Check current application state
 - `take_screenshot` - Capture the 3D viewport (OpenGL render to PNG file)
 - `set_camera_view` - Control camera: preset views (iso/top/front/left/right/rear), zoom, rotate, pan
+
+### Project Management
+- `new_project` - Create a new empty project (clears build plate, preserves presets)
+- `open_project` - Open a 3MF project file (replaces entire project state)
 
 ## Common Workflows
 

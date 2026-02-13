@@ -197,6 +197,22 @@ All updated build instructions for Windows, macOS, and Linux are now available o
 
 Please refer to the wiki to ensure you're following the latest and most accurate steps for your platform.
 
+# AI Agent Control (MCP)
+
+OrcaSlicer includes a built-in [MCP server](https://modelcontextprotocol.io/) that allows AI agents like **Claude** to control the slicer — loading models, adjusting settings, slicing, and more — through natural language.
+
+```bash
+# 1. Launch OrcaSlicer with MCP enabled
+OrcaSlicer --mcp-server
+
+# 2. Register the bridge with Claude Code (one-time setup)
+claude mcp add orcaslicer -- node /path/to/OrcaSlicer/resources/mcp/orcaslicer-mcp-bridge/dist/bridge.mjs
+```
+
+**31 tools available**: load models, move/rotate/scale objects, change settings, select presets, slice, take screenshots, control camera, and more.
+
+> **[Full MCP documentation](resources/mcp/README.md)** — setup guide, tool reference, architecture, troubleshooting.
+
 # Klipper Note
 
 If you're running Klipper, it's recommended to add the following configuration to your `printer.cfg` file.

@@ -406,6 +406,9 @@ public:
     SideButton* m_slice_option_btn{ nullptr };
     SideButton* m_print_btn{ nullptr };
     SideButton* m_print_option_btn{ nullptr };
+#ifdef SLIC3R_MCP_SERVER
+    wxStaticText* m_mcp_label{ nullptr };
+#endif
 
     SidePopup*  m_slice_option_pop_up{ nullptr };
 

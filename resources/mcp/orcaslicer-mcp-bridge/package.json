@@ -1,0 +1,17 @@
+{
+  "name": "orcaslicer-mcp-bridge",
+  "version": "1.0.0",
+  "description": "MCP stdio bridge for OrcaSlicer's HTTP/SSE MCP server",
+  "type": "module",
+  "main": "bridge.mjs",
+  "scripts": {
+    "start": "node bridge.mjs",
+    "build": "esbuild bridge.mjs --bundle --platform=node --target=node18 --format=esm --outfile=dist/bridge.mjs"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.26.0"
+  },
+  "devDependencies": {
+    "esbuild": "^0.27.3"
+  }
+}

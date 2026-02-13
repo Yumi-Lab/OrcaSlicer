@@ -14,6 +14,7 @@
 #include "libslic3r/PrintConfig.hpp"
 #include "libslic3r/AppConfig.hpp"
 
+#include <boost/any.hpp>
 #include <boost/log/trivial.hpp>
 
 namespace Slic3r { namespace GUI { namespace MCP {
@@ -125,10 +126,15 @@ void PresetTools::register_tools(mcp::server& srv)
                 mcp::json applied = mcp::json::object();
                 mcp::json errors = mcp::json::object();
 
+                // Extract printhead/hotend switch requests — these must NOT be set
+                // in config before switch_printhead_config() so old_head is still valid
+                std::string pending_head, pending_hotend;
                 for (auto it = settings.begin(); it != settings.end(); ++it) {
                     const std::string& key = it.key();
                     const std::string  val = it.value().is_string() ? it.value().get<std::string>()
                                                                     : it.value().dump();
+                    if (key == "curr_print_head") { pending_head = val; applied[key] = val; continue; }
+                    if (key == "curr_hotend")     { pending_hotend = val; applied[key] = val; continue; }
                     try {
                         config.set_deserialize(key, val, ctx);
                         applied[key] = val;
@@ -137,17 +143,36 @@ void PresetTools::register_tools(mcp::server& srv)
                     }
                 }
 
-                // Notify the UI about config changes
-                if (!applied.empty()) {
+                // Handle printhead/hotend switch first (before update_dirty)
+                if (!pending_head.empty() || !pending_hotend.empty()) {
+                    if (category == "printer") {
+                        Tab* tab = wxGetApp().get_tab(category_to_preset_type(category));
+                        if (auto* tab_printer = dynamic_cast<TabPrinter*>(tab))
+                            tab_printer->switch_printhead_config(pending_head, pending_hotend);
+                    }
+                }
+
+                // Notify the UI about config changes (non-printhead keys)
+                bool has_non_switch_keys = false;
+                for (auto it = applied.begin(); it != applied.end(); ++it) {
+                    if (it.key() != "curr_print_head" && it.key() != "curr_hotend") {
+                        has_non_switch_keys = true;
+                        break;
+                    }
+                }
+
+                if (has_non_switch_keys) {
                     DynamicPrintConfig changed_config;
                     for (auto it = applied.begin(); it != applied.end(); ++it) {
+                        if (it.key() == "curr_print_head" || it.key() == "curr_hotend") continue;
                         const auto* opt = config.option(it.key());
                         if (opt)
                             changed_config.set_key_value(it.key(), opt->clone());
                     }
+
                     wxGetApp().plater()->on_config_change(changed_config);
 
-                    // Also refresh the Tab sidebar UI so fields update visually
+                    // Refresh the Tab sidebar UI so fields update visually
                     Tab* tab = wxGetApp().get_tab(category_to_preset_type(category));
                     if (tab) {
                         tab->update_dirty();

@@ -16,12 +16,25 @@
 #include "libslic3r/PresetBundle.hpp"
 #include "libslic3r/Geometry.hpp"
 #include "libslic3r/Config.hpp"
+#include "libslic3r/Slicing.hpp"
+#include "libslic3r/Print.hpp"
+#include "libslic3r/TriangleSelector.hpp"
+#include "slic3r/GUI/GLCanvas3D.hpp"
 
 #include <boost/filesystem.hpp>
 #include <boost/log/trivial.hpp>
 #include <sstream>
 
 namespace Slic3r { namespace GUI { namespace MCP {
+
+// Helper: wrap a JSON object as a proper MCP content block array
+static mcp::json make_text_result(const mcp::json& data)
+{
+    return mcp::json::array({{
+        {"type", "text"},
+        {"text", data.dump(2)}
+    }});
+}
 
 // Helper to find object by ID or name, returns object and its index
 static std::pair<ModelObject*, size_t> find_object_by_id_or_name(Plater* plater, const mcp::json& params) {
@@ -125,7 +138,9 @@ void register_scene_tools(mcp::server& srv)
                 30000
             );
 
-            return result.value_or(mcp::json{{"error", "Timeout loading model"}});
+            if (!result.has_value())
+                throw mcp::mcp_exception(mcp::error_code::internal_error, "GUI bridge timeout");
+            return make_text_result(result.value());
         });
     }
 
@@ -192,7 +207,9 @@ void register_scene_tools(mcp::server& srv)
                 5000
             );
 
-            return result.value_or(mcp::json{{"error", "Timeout"}});
+            if (!result.has_value())
+                throw mcp::mcp_exception(mcp::error_code::internal_error, "GUI bridge timeout");
+            return make_text_result(result.value());
         });
     }
 
@@ -252,7 +269,9 @@ void register_scene_tools(mcp::server& srv)
                 5000
             );
 
-            return result.value_or(mcp::json{{"error", "Timeout"}});
+            if (!result.has_value())
+                throw mcp::mcp_exception(mcp::error_code::internal_error, "GUI bridge timeout");
+            return make_text_result(result.value());
         });
     }
 
@@ -310,7 +329,9 @@ void register_scene_tools(mcp::server& srv)
                 5000
             );
 
-            return result.value_or(mcp::json{{"error", "Timeout"}});
+            if (!result.has_value())
+                throw mcp::mcp_exception(mcp::error_code::internal_error, "GUI bridge timeout");
+            return make_text_result(result.value());
         });
     }
 
@@ -355,7 +376,9 @@ void register_scene_tools(mcp::server& srv)
                 10000
             );
 
-            return result.value_or(mcp::json{{"error", "Timeout"}});
+            if (!result.has_value())
+                throw mcp::mcp_exception(mcp::error_code::internal_error, "GUI bridge timeout");
+            return make_text_result(result.value());
         });
     }
 
@@ -380,7 +403,9 @@ void register_scene_tools(mcp::server& srv)
                 15000
             );
 
-            return result.value_or(mcp::json{{"error", "Timeout"}});
+            if (!result.has_value())
+                throw mcp::mcp_exception(mcp::error_code::internal_error, "GUI bridge timeout");
+            return make_text_result(result.value());
         });
     }
 
@@ -405,7 +430,9 @@ void register_scene_tools(mcp::server& srv)
                 20000
             );
 
-            return result.value_or(mcp::json{{"error", "Timeout"}});
+            if (!result.has_value())
+                throw mcp::mcp_exception(mcp::error_code::internal_error, "GUI bridge timeout");
+            return make_text_result(result.value());
         });
     }
 
@@ -438,7 +465,9 @@ void register_scene_tools(mcp::server& srv)
                 5000
             );
 
-            return result.value_or(mcp::json{{"error", "Timeout"}});
+            if (!result.has_value())
+                throw mcp::mcp_exception(mcp::error_code::internal_error, "GUI bridge timeout");
+            return make_text_result(result.value());
         });
     }
 
@@ -510,6 +539,8 @@ void register_scene_tools(mcp::server& srv)
                     plater->update_filament_colors_in_full_config();
                     plater->sidebar().obj_list()->update_filament_colors();
                     plater->sidebar().update_dynamic_filament_list();
+                    // Refresh the filament combo widgets so color squares update
+                    plater->sidebar().update_presets(Preset::TYPE_FILAMENT);
                     plater->update();
 
                     return {
@@ -521,7 +552,9 @@ void register_scene_tools(mcp::server& srv)
                 10000
             );
 
-            return result.value_or(mcp::json{{"error", "Timeout"}});
+            if (!result.has_value())
+                throw mcp::mcp_exception(mcp::error_code::internal_error, "GUI bridge timeout");
+            return make_text_result(result.value());
         });
     }
 
@@ -560,6 +593,21 @@ void register_scene_tools(mcp::server& srv)
                     // Set extruder via config - extruder is stored as a config option
                     volume->config.set_key_value("extruder", new ConfigOptionInt(filament_id));
 
+                    // Save Z position before changed_object (it auto-snaps to bed)
+                    double z_before = obj->instances[0]->get_offset().z();
+
+                    // Notify plater and object list that the object was modified
+                    plater->changed_object(idx);
+
+                    // Restore Z if it was above bed
+                    if (z_before > 0.001) {
+                        obj->instances[0]->set_offset(obj->instances[0]->get_offset() + Vec3d(0, 0, z_before - obj->instances[0]->get_offset().z()));
+                    }
+
+                    // Refresh the object list to show updated filament assignment
+                    plater->sidebar().obj_list()->update_info_items(idx);
+                    plater->update();
+
                     return {
                         {"object_name", obj->name},
                         {"volume_id", volume_id},
@@ -570,7 +618,9 @@ void register_scene_tools(mcp::server& srv)
                 5000
             );
 
-            return result.value_or(mcp::json{{"error", "Timeout"}});
+            if (!result.has_value())
+                throw mcp::mcp_exception(mcp::error_code::internal_error, "GUI bridge timeout");
+            return make_text_result(result.value());
         });
     }
 
@@ -652,7 +702,9 @@ void register_scene_tools(mcp::server& srv)
                 5000
             );
 
-            return result.value_or(mcp::json{{"error", "Timeout"}});
+            if (!result.has_value())
+                throw mcp::mcp_exception(mcp::error_code::internal_error, "GUI bridge timeout");
+            return make_text_result(result.value());
         });
     }
 
@@ -756,11 +808,319 @@ void register_scene_tools(mcp::server& srv)
                 10000
             );
 
-            return result.value_or(mcp::json{{"error", "Timeout"}});
+            if (!result.has_value())
+                throw mcp::mcp_exception(mcp::error_code::internal_error, "GUI bridge timeout");
+            return make_text_result(result.value());
         });
     }
 
-    BOOST_LOG_TRIVIAL(info) << "MCP: Registered 13 scene management tools";
+    // Tool 13: adaptive_layer_height
+    {
+        auto tool = mcp::tool_builder("adaptive_layer_height")
+            .with_description("Apply adaptive/variable layer height to an object based on surface geometry. "
+                              "Uses thinner layers on curved/detailed areas and thicker layers on flat/vertical areas "
+                              "for better surface finish with minimal print time increase.")
+            .with_number_param("object_id", "Object ID (optional, uses first object if omitted)", false)
+            .with_number_param("quality", "Quality factor 0.0 (coarse/fast) to 1.0 (fine/smooth). Default: 0.5", false)
+            .with_boolean_param("smooth", "Apply smoothing pass after adaptation (default: true)", false)
+            .with_number_param("smooth_radius", "Smoothing radius 1-10 (default: 5)", false)
+            .build();
+
+        srv.register_tool(tool, [](const mcp::json& params, const std::string& /*session_id*/) -> mcp::json {
+            float quality = params.value("quality", 0.5f);
+            bool do_smooth = params.value("smooth", true);
+            unsigned int smooth_radius = params.value("smooth_radius", 5);
+
+            if (quality < 0.0f) quality = 0.0f;
+            if (quality > 1.0f) quality = 1.0f;
+            if (smooth_radius < 1) smooth_radius = 1;
+            if (smooth_radius > 10) smooth_radius = 10;
+
+            auto result = MCPGUIBridge::instance().execute_on_gui<mcp::json>(
+                [params, quality, do_smooth, smooth_radius]() -> mcp::json {
+                    auto* plater = GUI::wxGetApp().plater();
+                    if (!plater)
+                        throw mcp::mcp_exception(mcp::error_code::internal_error, "No plater available");
+
+                    auto [obj, obj_idx] = find_object_by_id_or_name(plater, params);
+                    if (!obj)
+                        throw mcp::mcp_exception(mcp::error_code::invalid_params, "Object not found");
+
+                    // Compute SlicingParameters from current config + object
+                    const DynamicPrintConfig& config = GUI::wxGetApp().preset_bundle->full_config();
+                    float object_max_z = (float)obj->raw_bounding_box().size().z();
+                    Vec3d shrinkage = Vec3d::Ones(); // no shrinkage compensation for preview
+                    SlicingParameters slicing_params = PrintObject::slicing_parameters(
+                        config, *obj, object_max_z, shrinkage);
+
+                    // Compute adaptive layer height profile
+                    std::vector<double> profile = layer_height_profile_adaptive(
+                        slicing_params, *obj, quality);
+
+                    // Optionally smooth the profile
+                    if (do_smooth) {
+                        HeightProfileSmoothingParams smooth_params(smooth_radius, false);
+                        profile = smooth_height_profile(profile, slicing_params, smooth_params);
+                    }
+
+                    // Set the profile on the model object
+                    obj->layer_height_profile.set(profile);
+
+                    // Schedule background process update
+                    auto* canvas = plater->get_view3D_canvas3D();
+                    if (canvas) {
+                        canvas->post_event(SimpleEvent(EVT_GLCANVAS_SCHEDULE_BACKGROUND_PROCESS));
+                    }
+
+                    // Compute stats from the profile
+                    double min_layer = 9999.0, max_layer = 0.0;
+                    int num_entries = (int)profile.size() / 2;
+                    for (size_t i = 1; i < profile.size(); i += 2) {
+                        double h = profile[i];
+                        if (h < min_layer) min_layer = h;
+                        if (h > max_layer) max_layer = h;
+                    }
+
+                    return {
+                        {"success", true},
+                        {"object", obj->name},
+                        {"quality_factor", quality},
+                        {"smoothed", do_smooth},
+                        {"profile_entries", num_entries},
+                        {"min_layer_height", min_layer},
+                        {"max_layer_height", max_layer},
+                        {"message", "Adaptive layer height applied. Thinner layers on curves, thicker on flat areas."}
+                    };
+                },
+                15000
+            );
+
+            if (!result.has_value())
+                throw mcp::mcp_exception(mcp::error_code::internal_error, "GUI bridge timeout");
+            return make_text_result(result.value());
+        });
+    }
+
+    // Tool 14: color_paint
+    {
+        auto tool = mcp::tool_builder("color_paint")
+            .with_description("Paint an object's surface with multiple colors. "
+                              "Modes: 'spheres' (paint regions with positioned spheres — most precise), "
+                              "'z_bands' (horizontal stripes by height — use 'thresholds' for custom boundaries), "
+                              "'random' (random per-triangle), 'clear' (reset all painting). "
+                              "Coordinates are in LOCAL object space (use get_plate_info bounding_box to see ranges). "
+                              "Requires multiple filament slots to be set up first (use set_filament_count).")
+            .with_number_param("object_id", "Object ID (optional, uses first object if omitted)", false)
+            .with_number_param("num_colors", "Number of colors to paint with (2-16, default 3)", false)
+            .with_string_param("mode", "Painting mode: 'spheres', 'z_bands' (default), 'random', or 'clear'", false)
+            .with_number_param("base_color", "Base/default color index (1-based, default 1) for unpainted triangles in spheres mode", false)
+            .with_string_param("spheres", "JSON array of sphere regions for 'spheres' mode. Each sphere: "
+                               "{\"x\":0, \"y\":0, \"z\":10, \"radius\":15, \"color\":2}. "
+                               "Coordinates are in local object space. Color is 1-based filament index. "
+                               "Later spheres override earlier ones for overlapping triangles.", false)
+            .with_string_param("thresholds", "JSON array of Z-percentage boundaries for z_bands mode, e.g. '[0.4, 0.7]' "
+                               "creates 3 bands: 0-40%, 40-70%, 70-100%. Length must be num_colors-1. "
+                               "If omitted, bands are evenly distributed.", false)
+            .build();
+
+        srv.register_tool(tool, [](const mcp::json& params, const std::string& /*session_id*/) -> mcp::json {
+            int num_colors = params.value("num_colors", 3);
+            std::string mode = params.value("mode", "z_bands");
+            int base_color = params.value("base_color", 1);
+
+            if (num_colors < 2) num_colors = 2;
+            if (num_colors > 16) num_colors = 16;
+            if (base_color < 1) base_color = 1;
+            if (base_color > num_colors) base_color = num_colors;
+
+            // Parse custom thresholds if provided
+            std::vector<float> thresholds;
+            if (params.contains("thresholds") && !params["thresholds"].is_null()) {
+                std::string thresh_str = params["thresholds"].get<std::string>();
+                auto thresh_json = mcp::json::parse(thresh_str);
+                if (thresh_json.is_array()) {
+                    for (const auto& v : thresh_json)
+                        thresholds.push_back(v.get<float>());
+                }
+            }
+
+            // Parse spheres if provided
+            struct PaintSphere { float x, y, z, radius; int color; };
+            std::vector<PaintSphere> spheres;
+            if (params.contains("spheres") && !params["spheres"].is_null()) {
+                std::string spheres_str = params["spheres"].get<std::string>();
+                auto spheres_json = mcp::json::parse(spheres_str);
+                if (spheres_json.is_array()) {
+                    for (const auto& s : spheres_json) {
+                        PaintSphere ps;
+                        ps.x = s.value("x", 0.0f);
+                        ps.y = s.value("y", 0.0f);
+                        ps.z = s.value("z", 0.0f);
+                        ps.radius = s.value("radius", 10.0f);
+                        ps.color = s.value("color", 1);
+                        spheres.push_back(ps);
+                    }
+                }
+            }
+
+            auto result = MCPGUIBridge::instance().execute_on_gui<mcp::json>(
+                [params, num_colors, mode, thresholds, spheres, base_color]() -> mcp::json {
+                    auto* plater = GUI::wxGetApp().plater();
+                    if (!plater)
+                        throw mcp::mcp_exception(mcp::error_code::internal_error, "No plater available");
+
+                    auto [obj, obj_idx] = find_object_by_id_or_name(plater, params);
+                    if (!obj)
+                        throw mcp::mcp_exception(mcp::error_code::invalid_params, "Object not found");
+
+                    // Clear mode: reset all painting
+                    if (mode == "clear") {
+                        for (auto* volume : obj->volumes) {
+                            if (!volume->is_model_part()) continue;
+                            volume->mmu_segmentation_facets.reset();
+                        }
+                        plater->changed_object(obj_idx);
+                        plater->update();
+                        return {
+                            {"success", true},
+                            {"object", obj->name},
+                            {"mode", "clear"},
+                            {"message", "All color painting cleared."}
+                        };
+                    }
+
+                    int total_painted = 0;
+                    mcp::json volumes_info = mcp::json::array();
+
+                    for (size_t vol_idx = 0; vol_idx < obj->volumes.size(); vol_idx++) {
+                        ModelVolume* volume = obj->volumes[vol_idx];
+                        if (!volume->is_model_part()) continue;
+
+                        const TriangleMesh& mesh = volume->mesh();
+                        const auto& its = mesh.its;
+                        size_t num_triangles = its.indices.size();
+
+                        TriangleSelector selector(mesh);
+
+                        if (mode == "spheres") {
+                            if (spheres.empty())
+                                throw mcp::mcp_exception(mcp::error_code::invalid_params,
+                                    "spheres mode requires 'spheres' parameter with array of sphere definitions");
+
+                            // Paint all triangles with base color first
+                            for (size_t tri = 0; tri < num_triangles; tri++) {
+                                selector.set_facet(tri, EnforcerBlockerType(base_color));
+                            }
+
+                            // Apply each sphere in order (later spheres override)
+                            for (const auto& sp : spheres) {
+                                float r2 = sp.radius * sp.radius;
+                                for (size_t tri = 0; tri < num_triangles; tri++) {
+                                    const Vec3i32& idx = its.indices[tri];
+                                    float cx = (its.vertices[idx[0]].x() +
+                                                its.vertices[idx[1]].x() +
+                                                its.vertices[idx[2]].x()) / 3.0f;
+                                    float cy = (its.vertices[idx[0]].y() +
+                                                its.vertices[idx[1]].y() +
+                                                its.vertices[idx[2]].y()) / 3.0f;
+                                    float cz = (its.vertices[idx[0]].z() +
+                                                its.vertices[idx[1]].z() +
+                                                its.vertices[idx[2]].z()) / 3.0f;
+                                    float dx = cx - sp.x;
+                                    float dy = cy - sp.y;
+                                    float dz = cz - sp.z;
+                                    if (dx*dx + dy*dy + dz*dz <= r2) {
+                                        int c = std::max(1, std::min(sp.color, 16));
+                                        selector.set_facet(tri, EnforcerBlockerType(c));
+                                    }
+                                }
+                            }
+                        } else if (mode == "z_bands") {
+                            float z_min = std::numeric_limits<float>::max();
+                            float z_max = std::numeric_limits<float>::lowest();
+                            for (const auto& v : its.vertices) {
+                                if (v.z() < z_min) z_min = v.z();
+                                if (v.z() > z_max) z_max = v.z();
+                            }
+                            float z_range = z_max - z_min;
+                            if (z_range < 0.001f) z_range = 1.0f;
+
+                            // Build threshold boundaries [0, t1, t2, ..., 1]
+                            std::vector<float> boundaries;
+                            boundaries.push_back(0.0f);
+                            if (!thresholds.empty() && (int)thresholds.size() == num_colors - 1) {
+                                for (float t : thresholds) boundaries.push_back(t);
+                            } else {
+                                for (int i = 1; i < num_colors; i++)
+                                    boundaries.push_back((float)i / num_colors);
+                            }
+                            boundaries.push_back(1.0f);
+
+                            for (size_t tri = 0; tri < num_triangles; tri++) {
+                                const Vec3i32& idx = its.indices[tri];
+                                float z_centroid = (its.vertices[idx[0]].z() +
+                                                    its.vertices[idx[1]].z() +
+                                                    its.vertices[idx[2]].z()) / 3.0f;
+                                float normalized = (z_centroid - z_min) / z_range;
+                                // Find which band this triangle belongs to
+                                int color_idx = num_colors - 1;
+                                for (int b = 0; b < num_colors; b++) {
+                                    if (normalized < boundaries[b + 1]) {
+                                        color_idx = b;
+                                        break;
+                                    }
+                                }
+                                selector.set_facet(tri, EnforcerBlockerType(color_idx + 1));
+                            }
+                        } else if (mode == "random") {
+                            std::srand(42);
+                            for (size_t tri = 0; tri < num_triangles; tri++) {
+                                int color_idx = std::rand() % num_colors;
+                                selector.set_facet(tri, EnforcerBlockerType(color_idx + 1));
+                            }
+                        } else {
+                            throw mcp::mcp_exception(mcp::error_code::invalid_params,
+                                "Unknown mode: " + mode + ". Use 'spheres', 'z_bands', 'random', or 'clear'");
+                        }
+
+                        volume->mmu_segmentation_facets.set(selector);
+                        total_painted += (int)num_triangles;
+
+                        volumes_info.push_back({
+                            {"volume_name", volume->name},
+                            {"triangles_painted", (int)num_triangles}
+                        });
+                    }
+
+                    double z_before = obj->instances[0]->get_offset().z();
+                    plater->changed_object(obj_idx);
+                    if (z_before > 0.001) {
+                        obj->instances[0]->set_offset(
+                            obj->instances[0]->get_offset() +
+                            Vec3d(0, 0, z_before - obj->instances[0]->get_offset().z()));
+                    }
+                    plater->update();
+
+                    return {
+                        {"success", true},
+                        {"object", obj->name},
+                        {"mode", mode},
+                        {"num_colors", num_colors},
+                        {"total_triangles_painted", total_painted},
+                        {"volumes", volumes_info},
+                        {"message", "Color painting applied. Use 'take_screenshot' to see the result."}
+                    };
+                },
+                120000
+            );
+
+            if (!result.has_value())
+                throw mcp::mcp_exception(mcp::error_code::internal_error, "GUI bridge timeout (120s)");
+            return make_text_result(result.value());
+        });
+    }
+
+    BOOST_LOG_TRIVIAL(info) << "MCP: Registered 15 scene management tools";
 }
 
 }}} // namespace Slic3r::GUI::MCP

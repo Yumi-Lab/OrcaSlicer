@@ -19,11 +19,27 @@
 #include "libslic3r/Model.hpp"
 
 #include <boost/log/trivial.hpp>
+#include <boost/filesystem.hpp>
 #include <wx/image.h>
 #include <wx/glcanvas.h>
+#include <algorithm>
 #include <thread>
 
+#ifdef __APPLE__
+#include "slic3r/GUI/MacScreenshot.h"
+#endif
+
 namespace Slic3r { namespace GUI { namespace MCP {
+
+// Helper: wrap a JSON object as a proper MCP content block array
+// MCP spec requires tool results to be [{type: "text", text: "..."}]
+static mcp::json make_text_result(const mcp::json& data)
+{
+    return mcp::json::array({{
+        {"type", "text"},
+        {"text", data.dump(2)}
+    }});
+}
 
 // Helper: convert Camera::ViewAngleType string to enum
 static bool parse_view_angle(const std::string& view, Camera::ViewAngleType& out)
@@ -44,18 +60,56 @@ void register_ui_tools(mcp::server& srv)
     // ---- take_screenshot ----
     {
         auto tool = mcp::tool_builder("take_screenshot")
-            .with_description("Take a screenshot of the 3D view using the internal OpenGL renderer. "
-                              "Works even when OrcaSlicer is behind other windows. "
-                              "Renders directly from the GL framebuffer for reliable capture. "
-                              "Use this to visually verify changes made via MCP tools.")
+            .with_description("Take a screenshot. Two capture modes available: "
+                              "'viewport' renders the 3D view via GL framebuffer (works behind other windows), "
+                              "'window' captures the full application window including sidebar, menus, toolbars "
+                              "(uses native OS API, macOS only). Use 'window' mode to see UI state.")
             .with_string_param("filepath", "Output PNG file path (e.g. /tmp/screenshot.png)", true)
-            .with_number_param("width", "Image width in pixels (default: 1280)", false)
-            .with_number_param("height", "Image height in pixels (default: 720)", false)
-            .with_string_param("view", "Camera view angle: iso, top, front, rear, left, right, bottom, topfront (default: current view)", false)
+            .with_string_param("capture_mode", "Capture mode: 'viewport' (3D GL only, default) or 'window' (full app window)", false)
+            .with_number_param("width", "Image width in pixels (default: 1280, viewport mode only)", false)
+            .with_number_param("height", "Image height in pixels (default: 720, viewport mode only)", false)
+            .with_string_param("view", "Camera view angle: iso, top, front, rear, left, right, bottom, topfront (viewport mode only)", false)
             .build();
 
         srv.register_tool(tool, [](const mcp::json& params, const std::string& /*session_id*/) -> mcp::json {
             std::string filepath = params["filepath"];
+            std::string capture_mode = params.value("capture_mode", "viewport");
+
+            // ---- Window capture mode (native OS) ----
+            if (capture_mode == "window") {
+#ifdef __APPLE__
+                auto result = MCPGUIBridge::instance().execute_on_gui<mcp::json>(
+                    [filepath]() -> mcp::json {
+                        auto* mainframe = wxGetApp().mainframe;
+                        if (!mainframe)
+                            return {{"error", "MainFrame not available"}};
+
+                        void* handle = mainframe->GetHandle();
+                        if (!handle)
+                            return {{"error", "Could not get native window handle"}};
+
+                        bool ok = Slic3r::GUI::capture_window_screenshot(handle, filepath);
+                        if (!ok)
+                            return {{"error", "Native window capture failed"}};
+
+                        return {
+                            {"success", true},
+                            {"filepath", filepath},
+                            {"method", "native_window_capture"}
+                        };
+                    },
+                    10000  // 10s timeout
+                );
+                if (!result.has_value())
+                    throw mcp::mcp_exception(mcp::error_code::internal_error, "GUI bridge timeout");
+                return make_text_result(result.value());
+#else
+                throw mcp::mcp_exception(mcp::error_code::invalid_params,
+                    "Window capture mode is only available on macOS. Use 'viewport' mode.");
+#endif
+            }
+
+            // ---- Viewport capture mode (GL FBO) ----
             unsigned int width = params.value("width", 1280);
             unsigned int height = params.value("height", 720);
             std::string view = params.value("view", "");
@@ -138,7 +192,7 @@ void register_ui_tools(mcp::server& srv)
 
             if (!result.has_value())
                 throw mcp::mcp_exception(mcp::error_code::internal_error, "GUI bridge timeout");
-            return result.value();
+            return make_text_result(result.value());
         });
     }
 
@@ -178,7 +232,9 @@ void register_ui_tools(mcp::server& srv)
                 5000
             );
 
-            return result.value_or(mcp::json{{"error", "Timeout"}});
+            if (!result.has_value())
+                throw mcp::mcp_exception(mcp::error_code::internal_error, "GUI bridge timeout");
+            return make_text_result(result.value());
         });
     }
 
@@ -294,7 +350,7 @@ void register_ui_tools(mcp::server& srv)
 
             if (!result.has_value())
                 throw mcp::mcp_exception(mcp::error_code::internal_error, "GUI bridge timeout");
-            return result.value();
+            return make_text_result(result.value());
         });
     }
 
@@ -330,7 +386,9 @@ void register_ui_tools(mcp::server& srv)
                 5000
             );
 
-            return result.value_or(mcp::json{{"error", "Timeout"}});
+            if (!result.has_value())
+                throw mcp::mcp_exception(mcp::error_code::internal_error, "GUI bridge timeout");
+            return make_text_result(result.value());
         });
     }
 
@@ -459,24 +517,120 @@ void register_ui_tools(mcp::server& srv)
                         "For multi-extruder printers, use the 'extruder' parameter in select_preset for filament.",
                         "load_model supports STL, OBJ, AMF formats. Avoid 3MF as it may trigger UI dialogs.",
                         "After slicing, use get_slice_statistics to review the results.",
-                        "move_object supports Z positioning for stacking objects above the bed."
+                        "move_object supports Z positioning for stacking objects above the bed.",
+                        "Use new_project to reset the build plate and start fresh.",
+                        "Use open_project to load a 3MF project file (preserves presets, plate layout, etc.)."
                     });
 
-                    return mcp::json::array({{
-                        {"type", "text"},
-                        {"text", status.dump(2)}
-                    }});
+                    return status;
                 },
                 5000
             );
 
             if (!result.has_value())
                 throw mcp::mcp_exception(mcp::error_code::internal_error, "GUI bridge timeout");
-            return result.value();
+            return make_text_result(result.value());
         });
     }
 
-    BOOST_LOG_TRIVIAL(info) << "MCP: Registered 5 UI tools (screenshot, camera, tab navigation, app status)";
+    // ---- new_project ----
+    {
+        auto tool = mcp::tool_builder("new_project")
+            .with_description("Create a new empty project. Clears all objects from the build plate, "
+                              "resets project state, and switches to the prepare tab. "
+                              "Current presets (printer, filament, print profile) are preserved.")
+            .build();
+
+        srv.register_tool(tool, [](const mcp::json& /*params*/, const std::string& /*session_id*/) -> mcp::json {
+            auto result = MCPGUIBridge::instance().execute_on_gui<mcp::json>(
+                []() -> mcp::json {
+                    auto* plater = wxGetApp().plater();
+                    if (!plater)
+                        return {{"error", "Plater not available"}};
+
+                    // skip_confirm=true to avoid blocking dialog, silent=false to switch to prepare tab
+                    int res = plater->new_project(/*skip_confirm=*/true, /*silent=*/false);
+
+                    return {
+                        {"success", true},
+                        {"message", "New project created. Build plate is empty."}
+                    };
+                },
+                10000  // 10s timeout (project reset can take a moment)
+            );
+
+            if (!result.has_value())
+                throw mcp::mcp_exception(mcp::error_code::internal_error, "GUI bridge timeout");
+            return make_text_result(result.value());
+        });
+    }
+
+    // ---- open_project ----
+    {
+        auto tool = mcp::tool_builder("open_project")
+            .with_description("Open a 3MF project file. This loads the full project including objects, "
+                              "presets, plate layout, and all settings. Unlike load_model which just adds "
+                              "a model to the scene, open_project replaces the entire project state. "
+                              "The filepath must point to a .3mf file.")
+            .with_string_param("filepath", "Path to the 3MF project file to open", true)
+            .build();
+
+        srv.register_tool(tool, [](const mcp::json& params, const std::string& /*session_id*/) -> mcp::json {
+            std::string filepath = params["filepath"];
+
+            // Validate file exists and is .3mf
+            if (filepath.empty())
+                throw mcp::mcp_exception(mcp::error_code::invalid_params, "filepath is required");
+
+            auto result = MCPGUIBridge::instance().execute_on_gui<mcp::json>(
+                [filepath]() -> mcp::json {
+                    auto* plater = wxGetApp().plater();
+                    if (!plater)
+                        return {{"error", "Plater not available"}};
+
+                    // Check file exists
+                    if (!boost::filesystem::exists(filepath))
+                        return {{"error", "File not found: " + filepath}};
+
+                    // Check extension
+                    std::string ext = boost::filesystem::extension(filepath);
+                    std::transform(ext.begin(), ext.end(), ext.begin(), ::tolower);
+                    if (ext != ".3mf")
+                        return {{"error", "open_project only supports .3mf files. Got: " + ext + ". Use load_model for STL/OBJ/AMF."}};
+
+                    wxString wx_path = wxString::FromUTF8(filepath);
+                    plater->load_project(wx_path);
+
+                    // Report what was loaded
+                    const Model& model = plater->model();
+                    mcp::json objects = mcp::json::array();
+                    for (size_t i = 0; i < model.objects.size(); ++i) {
+                        const auto* obj = model.objects[i];
+                        if (!obj) continue;
+                        objects.push_back({
+                            {"object_id", (int)obj->id().id},
+                            {"name", obj->name},
+                            {"instances", (int)obj->instances.size()}
+                        });
+                    }
+
+                    return {
+                        {"success", true},
+                        {"filepath", filepath},
+                        {"objects_loaded", (int)model.objects.size()},
+                        {"objects", objects}
+                    };
+                },
+                30000  // 30s timeout for project loading
+            );
+
+            if (!result.has_value())
+                throw mcp::mcp_exception(mcp::error_code::internal_error, "GUI bridge timeout");
+            return make_text_result(result.value());
+        });
+    }
+
+    BOOST_LOG_TRIVIAL(info) << "MCP: Registered 7 UI tools (screenshot, camera, tab navigation, app status, new/open project)";
 }
 
 }}} // namespace Slic3r::GUI::MCP
