@@ -5135,6 +5135,42 @@ std::string GUI_App::handle_web_request(std::string cmd)
             else if (command_str.compare("homepage_delete_all_recentfile") == 0) {
                 this->request_remove_project("");
             }
+            else if (command_str.compare("homepage_set_max_recent_count") == 0) {
+                if (root.get_child_optional("data") != boost::none) {
+                    pt::ptree data_node = root.get_child("data");
+                    int count = data_node.get<int>("count", 999);
+                    CallAfter([this, count] {
+                        mainframe->set_max_recent_count(count);
+                        app_config->set("max_recent_count", std::to_string(count));
+                        app_config->save();
+                    });
+                }
+            }
+            else if (command_str.compare("homepage_save_library_settings") == 0) {
+                if (root.get_child_optional("data") != boost::none) {
+                    pt::ptree data_node = root.get_child("data");
+                    int thumb_size = data_node.get<int>("thumbnailSize", 184);
+                    int max_proj = data_node.get<int>("maxProjects", 999);
+                    std::string view_mode = data_node.get<std::string>("viewMode", "icon");
+                    app_config->set("library_thumbnail_size", std::to_string(thumb_size));
+                    app_config->set("library_max_projects", std::to_string(max_proj));
+                    app_config->set("library_view_mode", view_mode);
+                    app_config->save();
+                }
+            }
+            else if (command_str.compare("homepage_get_library_settings") == 0) {
+                // Send saved library settings to the WebView
+                CallAfter([this] {
+                    if (!mainframe || !mainframe->m_webview) return;
+                    std::string thumb_size = app_config->has("library_thumbnail_size") ? app_config->get("library_thumbnail_size") : "184";
+                    std::string max_proj = app_config->has("library_max_projects") ? app_config->get("library_max_projects") : "999";
+                    std::string view_mode = app_config->has("library_view_mode") ? app_config->get("library_view_mode") : "icon";
+                    wxString js = wxString::Format(
+                        "HandleStudio({\"command\":\"set_library_settings\",\"data\":{\"thumbnailSize\":%s,\"maxProjects\":%s,\"viewMode\":\"%s\"}})",
+                        thumb_size, max_proj, view_mode);
+                    mainframe->m_webview->RunScript(js);
+                });
+            }
             else if (command_str.compare("homepage_explore_recentfile") == 0) {
                 if (root.get_child_optional("data") != boost::none) {
                     pt::ptree                    data_node = root.get_child("data");

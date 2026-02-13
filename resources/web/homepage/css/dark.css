@@ -83,6 +83,22 @@ body
 	background-color:#00675b; /*ORCA color*/
 }
 
+/*--Settings Panel Dark--*/
+#RecentSettingsBtn
+{
+	color: #B3B3B5;
+}
+
+.SettingsIcon, .SettingsValue
+{
+	color: #B3B3B5;
+}
+
+.SettingsSep
+{
+	background-color: #3E3E45;
+}
+
 /*----User Manual------*/
 .UG_DESC
 {
