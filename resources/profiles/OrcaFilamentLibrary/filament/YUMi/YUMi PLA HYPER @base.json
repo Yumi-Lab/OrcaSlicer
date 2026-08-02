@@ -1,0 +1,60 @@
+{
+    "type": "filament",
+    "name": "YUMi PLA HYPER @base",
+    "inherits": "fdm_filament_pla",
+    "from": "system",
+    "filament_id": "YUMi001",
+    "instantiation": "false",
+    "filament_vendor": [
+        "YUMi"
+    ],
+    "filament_type": [
+        "PLA"
+    ],
+    "filament_density": [
+        "1.24"
+    ],
+    "filament_flow_ratio": [
+        "0.98"
+    ],
+    "filament_max_volumetric_speed": [
+        "15"
+    ],
+    "nozzle_temperature_initial_layer": [
+        "215"
+    ],
+    "nozzle_temperature": [
+        "210"
+    ],
+    "enable_pressure_advance": [
+        "0"
+    ],
+    "pressure_advance": [
+        "0.02"
+    ],
+    "filament_notes": "Ligne principale YUMI. Refroidissement necessaire.\n\nProduit : PLA HYPER YUMI\nValeurs officielles : buse 185-220 C, plateau 0-70 C, 20-300 mm/s, densite 1.24 g/cm3, buse 0.4 mm, Tg 58-62 C",
+    "cool_plate_temp": [
+        "60"
+    ],
+    "cool_plate_temp_initial_layer": [
+        "60"
+    ],
+    "eng_plate_temp": [
+        "60"
+    ],
+    "eng_plate_temp_initial_layer": [
+        "60"
+    ],
+    "hot_plate_temp": [
+        "60"
+    ],
+    "hot_plate_temp_initial_layer": [
+        "60"
+    ],
+    "textured_plate_temp": [
+        "60"
+    ],
+    "textured_plate_temp_initial_layer": [
+        "60"
+    ]
+}

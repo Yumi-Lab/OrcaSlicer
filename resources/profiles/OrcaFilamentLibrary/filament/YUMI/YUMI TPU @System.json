@@ -1,9 +1,0 @@
-{
-    "type": "filament",
-    "name": "YUMI TPU @System",
-    "inherits": "YUMI TPU @base",
-    "from": "system",
-    "setting_id": "LJX6LmBJdGLH8Vpk",
-    "instantiation": "true",
-    "compatible_printers": []
-}

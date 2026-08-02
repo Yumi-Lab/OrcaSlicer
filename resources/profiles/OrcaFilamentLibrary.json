@@ -1933,68 +1933,68 @@
             "sub_path": "filament/COEX/COEX PLA+Silk @System.json"
         },
         {
-            "name": "YUMI PLA HYPER @base",
-            "sub_path": "filament/YUMI/YUMI PLA HYPER @base.json"
+            "name": "YUMi PLA HYPER @base",
+            "sub_path": "filament/YUMi/YUMi PLA HYPER @base.json"
         },
         {
-            "name": "YUMI PLA HYPER @System",
-            "sub_path": "filament/YUMI/YUMI PLA HYPER @System.json"
+            "name": "YUMi PLA HYPER @System",
+            "sub_path": "filament/YUMi/YUMi PLA HYPER @System.json"
         },
         {
-            "name": "YUMI PLA+ Ultra Speed @base",
-            "sub_path": "filament/YUMI/YUMI PLA+ Ultra Speed @base.json"
+            "name": "YUMi PLA+ Ultra Speed @base",
+            "sub_path": "filament/YUMi/YUMi PLA+ Ultra Speed @base.json"
         },
         {
-            "name": "YUMI PLA+ Ultra Speed @System",
-            "sub_path": "filament/YUMI/YUMI PLA+ Ultra Speed @System.json"
+            "name": "YUMi PLA+ Ultra Speed @System",
+            "sub_path": "filament/YUMi/YUMi PLA+ Ultra Speed @System.json"
         },
         {
-            "name": "YUMI PETG @base",
-            "sub_path": "filament/YUMI/YUMI PETG @base.json"
+            "name": "YUMi PETG @base",
+            "sub_path": "filament/YUMi/YUMi PETG @base.json"
         },
         {
-            "name": "YUMI PETG @System",
-            "sub_path": "filament/YUMI/YUMI PETG @System.json"
+            "name": "YUMi PETG @System",
+            "sub_path": "filament/YUMi/YUMi PETG @System.json"
         },
         {
-            "name": "YUMI PLA-CF @base",
-            "sub_path": "filament/YUMI/YUMI PLA-CF @base.json"
+            "name": "YUMi PLA-CF @base",
+            "sub_path": "filament/YUMi/YUMi PLA-CF @base.json"
         },
         {
-            "name": "YUMI PLA-CF @System",
-            "sub_path": "filament/YUMI/YUMI PLA-CF @System.json"
+            "name": "YUMi PLA-CF @System",
+            "sub_path": "filament/YUMi/YUMi PLA-CF @System.json"
         },
         {
-            "name": "YUMI PETG-CF @base",
-            "sub_path": "filament/YUMI/YUMI PETG-CF @base.json"
+            "name": "YUMi PETG-CF @base",
+            "sub_path": "filament/YUMi/YUMi PETG-CF @base.json"
         },
         {
-            "name": "YUMI PETG-CF @System",
-            "sub_path": "filament/YUMI/YUMI PETG-CF @System.json"
+            "name": "YUMi PETG-CF @System",
+            "sub_path": "filament/YUMi/YUMi PETG-CF @System.json"
         },
         {
-            "name": "YUMI FPLA+ @base",
-            "sub_path": "filament/YUMI/YUMI FPLA+ @base.json"
+            "name": "YUMi FPLA+ @base",
+            "sub_path": "filament/YUMi/YUMi FPLA+ @base.json"
         },
         {
-            "name": "YUMI FPLA+ @System",
-            "sub_path": "filament/YUMI/YUMI FPLA+ @System.json"
+            "name": "YUMi FPLA+ @System",
+            "sub_path": "filament/YUMi/YUMi FPLA+ @System.json"
         },
         {
-            "name": "YUMI FPLA+ HR @base",
-            "sub_path": "filament/YUMI/YUMI FPLA+ HR @base.json"
+            "name": "YUMi FPLA+ HR @base",
+            "sub_path": "filament/YUMi/YUMi FPLA+ HR @base.json"
         },
         {
-            "name": "YUMI FPLA+ HR @System",
-            "sub_path": "filament/YUMI/YUMI FPLA+ HR @System.json"
+            "name": "YUMi FPLA+ HR @System",
+            "sub_path": "filament/YUMi/YUMi FPLA+ HR @System.json"
         },
         {
-            "name": "YUMI TPU @base",
-            "sub_path": "filament/YUMI/YUMI TPU @base.json"
+            "name": "YUMi TPU @base",
+            "sub_path": "filament/YUMi/YUMi TPU @base.json"
         },
         {
-            "name": "YUMI TPU @System",
-            "sub_path": "filament/YUMI/YUMI TPU @System.json"
+            "name": "YUMi TPU @System",
+            "sub_path": "filament/YUMi/YUMi TPU @System.json"
         }
     ],
     "process_list": [],

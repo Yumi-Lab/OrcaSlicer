@@ -1,0 +1,9 @@
+{
+    "type": "filament",
+    "name": "YUMi PETG @System",
+    "inherits": "YUMi PETG @base",
+    "from": "system",
+    "setting_id": "DO1V2oyaVsCoSdWH",
+    "instantiation": "true",
+    "compatible_printers": []
+}

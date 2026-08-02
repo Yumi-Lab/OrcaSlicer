@@ -1,0 +1,9 @@
+{
+    "type": "machine_model",
+    "name": "YUMi C435",
+    "model_id": "YUMiC435",
+    "nozzle_diameter": "0.4",
+    "machine_tech": "FFF",
+    "family": "YUMi",
+    "default_materials": "Generic PLA @System;Generic PETG @System;Generic ABS @System;Generic TPU @System"
+}

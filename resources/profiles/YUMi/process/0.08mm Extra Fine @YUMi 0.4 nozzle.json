@@ -1,0 +1,12 @@
+{
+    "type": "process",
+    "name": "0.08mm Extra Fine @YUMi 0.4 nozzle",
+    "inherits": "fdm_process_yumi_common_0_4",
+    "from": "system",
+    "setting_id": "1YtfDNgMkydFXjKz",
+    "instantiation": "true",
+    "layer_height": "0.08",
+    "initial_layer_print_height": "0.10",
+    "bottom_shell_layers": "3",
+    "top_shell_layers": "4"
+}

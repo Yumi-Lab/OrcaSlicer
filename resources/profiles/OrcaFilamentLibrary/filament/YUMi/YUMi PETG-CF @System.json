@@ -1,0 +1,9 @@
+{
+    "type": "filament",
+    "name": "YUMi PETG-CF @System",
+    "inherits": "YUMi PETG-CF @base",
+    "from": "system",
+    "setting_id": "KaM1eE3IGyShfW6y",
+    "instantiation": "true",
+    "compatible_printers": []
+}

@@ -1,0 +1,9 @@
+{
+    "type": "filament",
+    "name": "YUMi PLA-CF @System",
+    "inherits": "YUMi PLA-CF @base",
+    "from": "system",
+    "setting_id": "Q4Ml4X9l7oF164Fx",
+    "instantiation": "true",
+    "compatible_printers": []
+}
