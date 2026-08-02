@@ -3,6 +3,13 @@
 var m_HotModelList=null;
 var bambuSectionExpanded = false;
 
+// Library settings (persisted via C++ app_config)
+var librarySettings = {
+	thumbnailSize: 184,
+	maxProjects: 999,
+	viewMode: 'icon'
+};
+
 function OnInit()
 {
 	//-----Official-----
@@ -12,6 +19,7 @@ function OnInit()
 	SendMsg_GetBambuLoginInfo();
 	SendMsg_GetRecentFile();
 	SendMsg_GetStaffPick();
+	SendMsg_GetLibrarySettings();
 }
 
 //------最佳打开文件的右键菜单功能----------
@@ -144,6 +152,8 @@ function HandleStudio( pVal )
 
     m_HotModelList = pVal["hits"];
     ShowStaffPick(m_HotModelList);
+  } else if (strCmd == "set_library_settings") {
+    ApplyLibrarySettings(pVal["data"]);
   } else if (strCmd == "SetLoginPanelVisibility") {
     SetLoginPanelVisibility(pVal["data"]["visible"]);
   }
@@ -234,10 +244,18 @@ function ShowRecentFileList( pList )
 		strHtml+=TmpHtml;
 	}
 	
-	$("#FileList").html(strHtml);	
-	
+	$("#FileList").html(strHtml);
+
     Set_RecentFile_MouseRightBtn_Event();
 	UpdateRecentClearBtnDisplay();
+
+	// Apply current library settings to newly rendered items
+	if (librarySettings.thumbnailSize !== 184) {
+		OnThumbnailSizeChange(librarySettings.thumbnailSize);
+	}
+	if (librarySettings.viewMode === 'list') {
+		$('#FileList').addClass('ListView');
+	}
 }
 
 function ShowRecnetFileContextMenu()
@@ -574,6 +592,99 @@ function OpenOneStaffPickModel( ModelID )
 	tSend['data']['id']=ModelID;
 	
 	SendWXMessage( JSON.stringify(tSend) );		
+}
+
+
+//---------------Library Settings-----------------
+
+function SendMsg_GetLibrarySettings()
+{
+	var tSend={};
+	tSend['sequence_id']=Math.round(new Date() / 1000);
+	tSend['command']="homepage_get_library_settings";
+	SendWXMessage( JSON.stringify(tSend) );
+}
+
+function ToggleSettingsPanel()
+{
+	$('#RecentSettingsPanel').toggleClass('open');
+}
+
+function OnThumbnailSizeChange(size)
+{
+	size = parseInt(size);
+	librarySettings.thumbnailSize = size;
+
+	// Apply live to existing items in both icon and list modes
+	if (librarySettings.viewMode === 'icon') {
+		$('.FileItem').css('width', size + 'px');
+		$('.FileImg').css({'width': size + 'px', 'height': size + 'px'});
+		$('.FileItem img').css({'width': size + 'px', 'height': size + 'px'});
+	} else {
+		// List mode: adjust row thumbnail size
+		$('.FileImg').css({'width': size + 'px', 'height': size + 'px'});
+		$('.FileItem img').css({'width': size + 'px', 'height': size + 'px'});
+	}
+	SaveLibrarySettings();
+}
+
+function OnMaxProjectsChange(val)
+{
+	val = parseInt(val);
+	librarySettings.maxProjects = (val >= 200) ? 999 : val;
+	$('#MaxProjectsValue').html(val >= 200 ? '&#8734;' : val);
+
+	// Send to C++ to update max_recent_count
+	var tSend = {};
+	tSend['sequence_id'] = Math.round(new Date() / 1000);
+	tSend['command'] = 'homepage_set_max_recent_count';
+	tSend['data'] = { 'count': librarySettings.maxProjects };
+	SendWXMessage(JSON.stringify(tSend));
+	SaveLibrarySettings();
+}
+
+function SetViewMode(mode)
+{
+	librarySettings.viewMode = mode;
+	if (mode === 'list') {
+		$('#FileList').addClass('ListView');
+		$('#ViewModeList').addClass('ViewModeActive');
+		$('#ViewModeIcon').removeClass('ViewModeActive');
+	} else {
+		$('#FileList').removeClass('ListView');
+		$('#ViewModeIcon').addClass('ViewModeActive');
+		$('#ViewModeList').removeClass('ViewModeActive');
+	}
+	// Re-apply thumbnail size in both modes
+	OnThumbnailSizeChange(librarySettings.thumbnailSize);
+	SaveLibrarySettings();
+}
+
+function SaveLibrarySettings()
+{
+	var tSend = {};
+	tSend['sequence_id'] = Math.round(new Date() / 1000);
+	tSend['command'] = 'homepage_save_library_settings';
+	tSend['data'] = librarySettings;
+	SendWXMessage(JSON.stringify(tSend));
+}
+
+function ApplyLibrarySettings(settings)
+{
+	if (!settings) return;
+	librarySettings.thumbnailSize = parseInt(settings.thumbnailSize) || 184;
+	librarySettings.maxProjects = parseInt(settings.maxProjects) || 999;
+	librarySettings.viewMode = settings.viewMode || 'icon';
+
+	// Update UI controls
+	$('#ThumbnailSizeSlider').val(librarySettings.thumbnailSize);
+
+	var sliderVal = (librarySettings.maxProjects >= 999) ? 200 : librarySettings.maxProjects;
+	$('#MaxProjectsSlider').val(sliderVal);
+	$('#MaxProjectsValue').html(librarySettings.maxProjects >= 200 ? '&#8734;' : librarySettings.maxProjects);
+
+	// Apply view mode
+	SetViewMode(librarySettings.viewMode);
 }
 
 

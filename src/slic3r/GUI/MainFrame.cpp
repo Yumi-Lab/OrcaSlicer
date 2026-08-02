@@ -297,7 +297,7 @@ MainFrame::MainFrame() :
 DPIFrame(NULL, wxID_ANY, "", wxDefaultPosition, wxDefaultSize, BORDERLESS_FRAME_STYLE, "mainframe")
     , m_printhost_queue_dlg(new PrintHostQueueDialog(this))
     // BBS
-    , m_recent_projects(18)
+    , m_recent_projects(999)
     , m_settings_dialog(this)
     , diff_dialog(this)
 {
@@ -333,7 +333,7 @@ DPIFrame(NULL, wxID_ANY, "", wxDefaultPosition, wxDefaultSize, BORDERLESS_FRAME_
     wxGetApp().app_config->set_bool("internal_developer_mode", false);
 
     wxString max_recent_count_str = wxGetApp().app_config->get("max_recent_count");
-    long max_recent_count = 18;
+    long max_recent_count = 999;
     if (max_recent_count_str.ToLong(&max_recent_count))
         set_max_recent_count((int)max_recent_count);
 

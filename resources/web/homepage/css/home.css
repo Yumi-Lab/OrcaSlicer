@@ -512,7 +512,172 @@ body
 
 #RecentTitle
 {
-	
+
+}
+
+/*--Settings Gear Button (same style as Clear all via ButtonStyleRegular ButtonTypeWindow)--*/
+#RecentSettingsBtn
+{
+	margin-left: 10px;
+	cursor: pointer;
+}
+
+/*--Collapsible Settings Panel (inline on same row)--*/
+#RecentSettingsPanel
+{
+	display: none;
+}
+
+#RecentSettingsPanel.open
+{
+	display: flex;
+	flex-direction: row;
+	align-items: center;
+	gap: 6px;
+	margin-left: 10px;
+}
+
+.SettingsIcon
+{
+	font-size: 16px;
+	opacity: 0.5;
+	flex-shrink: 0;
+}
+
+.SettingsValue
+{
+	font-size: 13px;
+	min-width: 24px;
+	text-align: center;
+	flex-shrink: 0;
+}
+
+.SettingsSep
+{
+	width: 1px;
+	height: 16px;
+	background-color: #D7D7D7;
+	margin: 0 4px;
+	flex-shrink: 0;
+}
+
+#RecentSettingsPanel input[type="range"]
+{
+	width: 100px;
+	flex-shrink: 0;
+}
+
+/*--View Mode Toggle (always visible)--*/
+#ViewModeIcon
+{
+	margin-left: 10px;
+}
+
+.ViewModeBtn
+{
+	cursor: pointer;
+	padding: 4px 6px;
+	border-radius: 4px;
+	border: 1px solid transparent;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	color: #009688;
+}
+
+.ViewModeBtn:hover
+{
+	opacity: 0.8;
+}
+
+.ViewModeActive
+{
+	background-color: #fff;
+}
+
+/*--Finder-style Grid Icon (2x2 squares)--*/
+.ViewIconGrid
+{
+	display: grid;
+	grid-template-columns: 1fr 1fr;
+	gap: 2px;
+	width: 12px;
+	height: 12px;
+}
+
+.ViewIconGrid span
+{
+	background: currentColor;
+	border-radius: 1.5px;
+}
+
+/*--Finder-style List Icon (lines with dots)--*/
+.ViewIconList
+{
+	display: flex;
+	flex-direction: column;
+	gap: 2px;
+	width: 14px;
+	height: 12px;
+	justify-content: center;
+}
+
+.ViewIconList span
+{
+	display: flex;
+	align-items: center;
+	gap: 3px;
+	height: 2px;
+}
+
+.ViewIconList span::before
+{
+	content: '';
+	width: 3px;
+	height: 3px;
+	border-radius: 50%;
+	background: currentColor;
+	flex-shrink: 0;
+}
+
+.ViewIconList span::after
+{
+	content: '';
+	flex: 1;
+	height: 1.5px;
+	background: currentColor;
+	border-radius: 1px;
+}
+
+/*--List View Mode--*/
+#FileList.ListView
+{
+	flex-direction: column;
+}
+
+#FileList.ListView .FileItem
+{
+	width: 100% !important;
+	display: flex;
+	flex-direction: row;
+	align-items: center;
+	gap: 12px;
+	margin: 2px 0;
+}
+
+#FileList.ListView .FileImg
+{
+	flex-shrink: 0;
+}
+
+#FileList.ListView .FileName
+{
+	flex: 1;
+}
+
+#FileList.ListView .FileDate
+{
+	flex-shrink: 0;
 }
 
 #FileList

@@ -128,6 +128,18 @@
 		<div id="RecentTitleBlock">
 		    <div id="RecentTitle" class="Content-Title trans TextS1" tid="t35">recent open</div>
 			<div id="RecentClearAllBtn" class="ButtonStyleRegular ButtonTypeWindow trans" tid="t12" onClick="OnDeleteAllRecentFiles()">Clear all</div>
+			<div id="ViewModeIcon" class="ViewModeBtn ViewModeActive" onClick="SetViewMode('icon')" title="Grid view"><div class="ViewIconGrid"><span></span><span></span><span></span><span></span></div></div>
+			<div id="ViewModeList" class="ViewModeBtn" onClick="SetViewMode('list')" title="List view"><div class="ViewIconList"><span></span><span></span><span></span></div></div>
+			<div id="RecentSettingsBtn" class="ButtonStyleRegular ButtonTypeWindow" onClick="ToggleSettingsPanel()">&#9881;</div>
+			<div id="RecentSettingsPanel">
+				<span class="SettingsIcon" title="Thumbnail size">&#9635;</span>
+				<input type="range" id="ThumbnailSizeSlider" min="100" max="300" value="184" onInput="OnThumbnailSizeChange(this.value)"/>
+				<span class="SettingsIcon" title="Thumbnail size">&#9636;</span>
+				<span class="SettingsSep"></span>
+				<span class="SettingsIcon" title="Max projects">&#9783;</span>
+				<input type="range" id="MaxProjectsSlider" min="18" max="200" value="200" onInput="OnMaxProjectsChange(this.value)"/>
+				<span id="MaxProjectsValue" class="SettingsValue">&#8734;</span>
+			</div>
 		</div>
 		<div id="FileList">
 <!--		    <div class="FileItem" onClick="OnOpenRecentFile('aaaa')" fpath='d:\model\11.3mf'>
