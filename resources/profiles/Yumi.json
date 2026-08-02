@@ -1,0 +1,53 @@
+{
+    "name": "Yumi",
+    "version": "01.02.00.00",
+    "force_update": "0",
+    "description": "Yumi 3D printer configurations",
+    "machine_model_list": [
+        {
+            "name": "Yumi Classic",
+            "sub_path": "machine/Yumi Classic.json"
+        },
+        {
+            "name": "YumiLAB C235",
+            "sub_path": "machine/YumiLAB C235.json"
+        }
+    ],
+    "process_list": [
+        {
+            "name": "fdm_process_common",
+            "sub_path": "process/fdm_process_common.json"
+        },
+        {
+            "name": "fdm_process_yumi_common",
+            "sub_path": "process/fdm_process_yumi_common.json"
+        },
+        {
+            "name": "0.20mm Standard @Yumi Classic (0.4 nozzle)",
+            "sub_path": "process/0.20mm Standard @Yumi Classic (0.4 nozzle).json"
+        },
+        {
+            "name": "0.20mm Standard @YumiLAB C235 (0.4 nozzle)",
+            "sub_path": "process/0.20mm Standard @YumiLAB C235 (0.4 nozzle).json"
+        }
+    ],
+    "filament_list": [],
+    "machine_list": [
+        {
+            "name": "fdm_machine_common",
+            "sub_path": "machine/fdm_machine_common.json"
+        },
+        {
+            "name": "fdm_yumi_common",
+            "sub_path": "machine/fdm_yumi_common.json"
+        },
+        {
+            "name": "Yumi Classic (0.4 nozzle)",
+            "sub_path": "machine/Yumi Classic (0.4 nozzle).json"
+        },
+        {
+            "name": "YumiLAB C235 (0.4 nozzle)",
+            "sub_path": "machine/YumiLAB C235 (0.4 nozzle).json"
+        }
+    ]
+}

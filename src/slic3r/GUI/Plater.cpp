@@ -243,6 +243,27 @@ wxDEFINE_EVENT(EVT_NOTICE_FULL_SCREEN_CHANGED, IntEvent);
 #define PRINTER_PANEL_RADIUS (6) // ORCA
 #define BTN_SYNC_SIZE (wxSize(FromDIP(96), FromDIP(98)))
 
+// Helper: resolve a print head or hotend name to an image resource name.
+// Tries "{prefix}_{normalized_name}" in resources/images/; falls back to "printer_placeholder".
+static std::string resolve_head_hotend_image(const std::string& name, const std::string& prefix)
+{
+    if (name.empty())
+        return "printer_placeholder";
+    std::string norm = boost::to_lower_copy(name);
+    boost::replace_all(norm, " ", "_");
+    // Try manufacturer-specific variants (with common suffixes)
+    for (const auto& suffix : { "_yumilab", "" }) {
+        std::string candidate = prefix + "_" + norm + suffix;
+        auto path = (boost::filesystem::path(Slic3r::resources_dir()) / "images" / (candidate + ".png"));
+        if (boost::filesystem::exists(path))
+            return candidate;
+    }
+    return "printer_placeholder";
+}
+
+static std::string get_print_head_image(const std::string& name)  { return resolve_head_hotend_image(name, "print_head"); }
+static std::string get_hotend_image(const std::string& name)      { return resolve_head_hotend_image(name, "hotend"); }
+
 static string get_diameter_string(float diameter)
 {
     std::ostringstream stream; // ORCA ensure 0.25 returned as 0.25. previous code returned as 0.2 because of std::setprecision(1)
@@ -675,6 +696,16 @@ struct Sidebar::priv
     ComboBox *      combo_nozzle_dia  = nullptr;
     Label *         label_nozzle_type = nullptr;
 
+    // Interchangeable printhead
+    StaticBox *     panel_print_head  = nullptr;
+    ComboBox *      combo_print_head  = nullptr;
+    wxStaticBitmap *image_print_head  = nullptr;
+
+    // Interchangeable hotend
+    StaticBox *     panel_hotend      = nullptr;
+    ComboBox *      combo_hotend      = nullptr;
+    wxStaticBitmap *image_hotend      = nullptr;
+
     // Printer - bed
     StaticBox *     panel_printer_bed = nullptr;
     wxStaticBitmap *image_printer_bed = nullptr;
@@ -817,6 +848,8 @@ void Sidebar::priv::layout_printer(bool isBBL, bool isDual)
     if (vsizer_printer->GetItemCount() == 0) {
         wxBoxSizer *hsizer_printer = new wxBoxSizer(wxHORIZONTAL);
         hsizer_printer->Add(panel_printer_preset, 1, wxEXPAND, 0);
+        hsizer_printer->Add(panel_print_head, 0, wxLEFT, FromDIP(4));
+        hsizer_printer->Add(panel_hotend,     0, wxLEFT, FromDIP(4));
         hsizer_printer->Add(panel_nozzle_dia , 0, wxLEFT, FromDIP(4));
         hsizer_printer->Add(panel_printer_bed, 0, wxLEFT, FromDIP(4));
         //hsizer_printer->Add(btn_sync_printer , 0, wxLEFT, FromDIP(4));
@@ -865,6 +898,16 @@ void Sidebar::priv::layout_printer(bool isBBL, bool isDual)
     // Orca: we use preset_bundle.is_bbl_vendor() instead of isBBL to determine if the plate type combo box should be shown
     // ref: https://github.com/OrcaSlicer/OrcaSlicer/pull/11610#discussion_r2607411847
     panel_printer_bed->Show(preset_bundle.is_bbl_vendor() || cfg.opt_bool("support_multi_bed_types"));
+
+    // Interchangeable printhead: show only for printers that declare available heads/hotends
+    {
+        bool has_heads = cfg.has("available_print_heads") &&
+                         !cfg.option<ConfigOptionStrings>("available_print_heads")->values.empty();
+        bool has_hotends = cfg.has("available_hotends") &&
+                           !cfg.option<ConfigOptionStrings>("available_hotends")->values.empty();
+        panel_print_head->Show(has_heads);
+        panel_hotend->Show(has_hotends);
+    }
 
     extruder_dual_sizer->Show(isDual);
 
@@ -2729,6 +2772,126 @@ Sidebar::Sidebar(Plater *parent)
 
         p->panel_printer_bed->SetSizer(bed_type_sizer);
 
+        // Interchangeable printhead panel (image + combo arrow, like bed type)
+        p->panel_print_head = new StaticBox(p->m_panel_printer_content);
+        p->panel_print_head->SetCornerRadius(FromDIP(PRINTER_PANEL_RADIUS));
+        p->panel_print_head->SetBorderColor(panel_color.bd_normal);
+        p->panel_print_head->SetMinSize(FromDIP(PRINTER_PANEL_SIZE));
+        p->panel_print_head->Bind(wxEVT_LEFT_DOWN, [this](auto &evt) {
+            p->combo_print_head->wxEvtHandler::ProcessEvent(evt);
+        });
+
+        ScalableBitmap bitmap_head(p->panel_print_head, "printer_placeholder", PRINTER_THUMBNAIL_SIZE.GetHeight());
+        p->image_print_head = new wxStaticBitmap(p->panel_print_head, wxID_ANY, bitmap_head.bmp(), wxDefaultPosition, wxDefaultSize, 0);
+        p->image_print_head->Bind(wxEVT_LEFT_DOWN, [this](auto &evt) {
+            p->combo_print_head->wxEvtHandler::ProcessEvent(evt);
+        });
+
+        p->combo_print_head = new ComboBox(p->panel_print_head, wxID_ANY, wxString(""), wxDefaultPosition, wxDefaultSize, 0, nullptr, wxCB_READONLY);
+        p->combo_print_head->SetBorderWidth(0);
+        p->combo_print_head->GetDropDown().SetUseContentWidth(true);
+        p->combo_print_head->SetMinSize(FromDIP(wxSize(18, -1)));
+        p->combo_print_head->SetMaxSize(FromDIP(wxSize(18, -1)));
+        p->combo_print_head->Bind(wxEVT_COMBOBOX, [this](auto &e) {
+            std::string sel = p->combo_print_head->GetStringSelection().ToUTF8().data();
+            if (!sel.empty()) {
+                auto img = get_print_head_image(sel);
+                p->image_print_head->SetBitmap(create_scaled_bitmap(img, this, PRINTER_THUMBNAIL_SIZE.GetHeight()));
+                if (auto* tab_printer = dynamic_cast<TabPrinter*>(wxGetApp().get_tab(Preset::TYPE_PRINTER)))
+                    tab_printer->switch_printhead_config(sel, "");
+            }
+            e.Skip();
+        });
+
+        auto head_focus_bg = [this, panel_color](bool focused){
+            auto bg_color = StateColor::darkModeColorFor(focused ? panel_color.bg_focus : panel_color.bg_normal);
+            p->panel_print_head->SetBackgroundColor(bg_color);
+            p->panel_print_head->SetBorderColor(focused ? panel_color.bd_focus : panel_color.bd_normal);
+            p->image_print_head->SetBackgroundColour(bg_color);
+            p->combo_print_head->SetBackgroundColour(bg_color);
+        };
+        p->combo_print_head->Bind(wxEVT_SET_FOCUS,  [head_focus_bg](auto& e) { head_focus_bg(true);  e.Skip(); });
+        p->combo_print_head->Bind(wxEVT_KILL_FOCUS, [head_focus_bg](auto& e) { head_focus_bg(false); e.Skip(); });
+
+        for (wxWindow *w : std::initializer_list<wxWindow *>{p->panel_print_head, p->image_print_head, p->combo_print_head}) {
+            w->Bind(wxEVT_ENTER_WINDOW, [this, panel_color](wxMouseEvent &e) {
+                if(!p->combo_print_head->HasFocus())
+                    p->panel_print_head->SetBorderColor(panel_color.bd_hover);
+                e.Skip();
+            });
+            w->Bind(wxEVT_LEAVE_WINDOW, [this, panel_color](wxMouseEvent &e) {
+                wxWindow* next_w = wxFindWindowAtPoint(wxGetMousePosition());
+                if (!p->combo_print_head->HasFocus() && (!next_w || !p->panel_print_head->IsDescendant(next_w)))
+                    p->panel_print_head->SetBorderColor(panel_color.bd_normal);
+                e.Skip();
+            });
+        }
+
+        wxBoxSizer *head_sizer = new wxBoxSizer(wxHORIZONTAL);
+        head_sizer->Add(p->combo_print_head, 0, wxALL | wxALIGN_CENTER_VERTICAL, FromDIP(2));
+        head_sizer->Add(p->image_print_head, 0, wxALL | wxALIGN_CENTER_VERTICAL, FromDIP(2));
+        p->panel_print_head->SetSizer(head_sizer);
+
+        // Interchangeable hotend panel (image + combo arrow, like bed type)
+        p->panel_hotend = new StaticBox(p->m_panel_printer_content);
+        p->panel_hotend->SetCornerRadius(FromDIP(PRINTER_PANEL_RADIUS));
+        p->panel_hotend->SetBorderColor(panel_color.bd_normal);
+        p->panel_hotend->SetMinSize(FromDIP(PRINTER_PANEL_SIZE));
+        p->panel_hotend->Bind(wxEVT_LEFT_DOWN, [this](auto &evt) {
+            p->combo_hotend->wxEvtHandler::ProcessEvent(evt);
+        });
+
+        ScalableBitmap bitmap_hotend(p->panel_hotend, "printer_placeholder", PRINTER_THUMBNAIL_SIZE.GetHeight());
+        p->image_hotend = new wxStaticBitmap(p->panel_hotend, wxID_ANY, bitmap_hotend.bmp(), wxDefaultPosition, wxDefaultSize, 0);
+        p->image_hotend->Bind(wxEVT_LEFT_DOWN, [this](auto &evt) {
+            p->combo_hotend->wxEvtHandler::ProcessEvent(evt);
+        });
+
+        p->combo_hotend = new ComboBox(p->panel_hotend, wxID_ANY, wxString(""), wxDefaultPosition, wxDefaultSize, 0, nullptr, wxCB_READONLY);
+        p->combo_hotend->SetBorderWidth(0);
+        p->combo_hotend->GetDropDown().SetUseContentWidth(true);
+        p->combo_hotend->SetMinSize(FromDIP(wxSize(18, -1)));
+        p->combo_hotend->SetMaxSize(FromDIP(wxSize(18, -1)));
+        p->combo_hotend->Bind(wxEVT_COMBOBOX, [this](auto &e) {
+            std::string sel = p->combo_hotend->GetStringSelection().ToUTF8().data();
+            if (!sel.empty()) {
+                auto img = get_hotend_image(sel);
+                p->image_hotend->SetBitmap(create_scaled_bitmap(img, this, PRINTER_THUMBNAIL_SIZE.GetHeight()));
+                if (auto* tab_printer = dynamic_cast<TabPrinter*>(wxGetApp().get_tab(Preset::TYPE_PRINTER)))
+                    tab_printer->switch_printhead_config("", sel);
+            }
+            e.Skip();
+        });
+
+        auto hotend_focus_bg = [this, panel_color](bool focused){
+            auto bg_color = StateColor::darkModeColorFor(focused ? panel_color.bg_focus : panel_color.bg_normal);
+            p->panel_hotend->SetBackgroundColor(bg_color);
+            p->panel_hotend->SetBorderColor(focused ? panel_color.bd_focus : panel_color.bd_normal);
+            p->image_hotend->SetBackgroundColour(bg_color);
+            p->combo_hotend->SetBackgroundColour(bg_color);
+        };
+        p->combo_hotend->Bind(wxEVT_SET_FOCUS,  [hotend_focus_bg](auto& e) { hotend_focus_bg(true);  e.Skip(); });
+        p->combo_hotend->Bind(wxEVT_KILL_FOCUS, [hotend_focus_bg](auto& e) { hotend_focus_bg(false); e.Skip(); });
+
+        for (wxWindow *w : std::initializer_list<wxWindow *>{p->panel_hotend, p->image_hotend, p->combo_hotend}) {
+            w->Bind(wxEVT_ENTER_WINDOW, [this, panel_color](wxMouseEvent &e) {
+                if(!p->combo_hotend->HasFocus())
+                    p->panel_hotend->SetBorderColor(panel_color.bd_hover);
+                e.Skip();
+            });
+            w->Bind(wxEVT_LEAVE_WINDOW, [this, panel_color](wxMouseEvent &e) {
+                wxWindow* next_w = wxFindWindowAtPoint(wxGetMousePosition());
+                if (!p->combo_hotend->HasFocus() && (!next_w || !p->panel_hotend->IsDescendant(next_w)))
+                    p->panel_hotend->SetBorderColor(panel_color.bd_normal);
+                e.Skip();
+            });
+        }
+
+        wxBoxSizer *hotend_sizer = new wxBoxSizer(wxHORIZONTAL);
+        hotend_sizer->Add(p->combo_hotend, 0, wxALL | wxALIGN_CENTER_VERTICAL, FromDIP(2));
+        hotend_sizer->Add(p->image_hotend, 0, wxALL | wxALIGN_CENTER_VERTICAL, FromDIP(2));
+        p->panel_hotend->SetSizer(hotend_sizer);
+
         AppConfig *app_config = wxGetApp().app_config;
         std::string str_bed_type = app_config->get("curr_bed_type");
         int bed_type_value = atoi(str_bed_type.c_str());
@@ -3337,6 +3500,20 @@ void Sidebar::update_all_preset_comboboxes()
     // ORCA Hide plate selector if not supported by printer
     p->panel_printer_bed->Show(is_bbl_vendor || cfg.opt_bool("support_multi_bed_types"));
 
+    // Update interchangeable printhead/hotend combos
+    {
+        bool has_heads = cfg.has("available_print_heads") &&
+                         !cfg.option<ConfigOptionStrings>("available_print_heads")->values.empty();
+        bool has_hotends = cfg.has("available_hotends") &&
+                           !cfg.option<ConfigOptionStrings>("available_hotends")->values.empty();
+        if (has_heads || has_hotends) {
+            update_printhead_sidebar_combos();
+        }
+        p->panel_print_head->Show(has_heads);
+        p->panel_hotend->Show(has_hotends);
+        p->m_panel_printer_content->Layout();
+    }
+
     // Update the print choosers to only contain the compatible presets, update the dirty flags.
     //BBS
 
@@ -3421,7 +3598,10 @@ void Sidebar::update_presets(Preset::Type preset_type)
         Tab* printer_tab = wxGetApp().get_tab(Preset::TYPE_PRINTER);
         if (printer_tab) {
             printer_tab->update();
-            printer_tab->on_preset_loaded();
+            // Note: on_preset_loaded() is NOT called here — it's already called by
+            // Tab::load_current_preset() during actual preset switches. Calling it from
+            // update_presets() would trigger switch_printhead_config() during every
+            // update_dirty() cycle, resetting HEAD_TIED_KEYS to official values.
         }
 
         Preset& printer_preset = wxGetApp().preset_bundle->printers.get_edited_preset();
@@ -3676,6 +3856,77 @@ bool Sidebar::reset_bed_type_combox_choices(bool is_sidebar_init)
     return true;
 }
 
+void Sidebar::update_printhead_sidebar_combos()
+{
+    if (!p->combo_print_head || !p->combo_hotend)
+        return;
+
+    auto& cfg = wxGetApp().preset_bundle->printers.get_edited_preset().config;
+
+    // Per-panel visibility based on available heads/hotends
+    auto* heads = cfg.option<ConfigOptionStrings>("available_print_heads");
+    bool has_heads = heads && !heads->values.empty();
+    auto* hotends = cfg.option<ConfigOptionStrings>("available_hotends");
+    bool has_hotends = hotends && !hotends->values.empty();
+
+    p->panel_print_head->Show(has_heads);
+    p->panel_hotend->Show(has_hotends);
+
+    if (!has_heads && !has_hotends) {
+        p->combo_print_head->Clear();
+        p->combo_hotend->Clear();
+        return;
+    }
+
+    // Populate print head combo
+    p->combo_print_head->Clear();
+    if (heads) {
+        for (const auto& h : heads->values)
+            p->combo_print_head->Append(wxString::FromUTF8(h));
+    }
+
+    // Restore selection from app_config or config default
+    std::string printer_name = wxGetApp().preset_bundle->printers.get_selected_preset_name();
+    std::string curr_head = wxGetApp().app_config->get_printer_setting(printer_name, "curr_print_head");
+    if (curr_head.empty())
+        curr_head = cfg.opt_string("curr_print_head");
+    if (curr_head.empty() && cfg.has("default_print_head"))
+        curr_head = cfg.opt_string("default_print_head");
+    if (!curr_head.empty())
+        p->combo_print_head->SetStringSelection(wxString::FromUTF8(curr_head));
+    else if (p->combo_print_head->GetCount() > 0)
+        p->combo_print_head->SetSelection(0);
+
+    // Populate hotend combo
+    p->combo_hotend->Clear();
+    if (hotends) {
+        for (const auto& h : hotends->values)
+            p->combo_hotend->Append(wxString::FromUTF8(h));
+    }
+
+    std::string curr_hotend = wxGetApp().app_config->get_printer_setting(printer_name, "curr_hotend");
+    if (curr_hotend.empty())
+        curr_hotend = cfg.opt_string("curr_hotend");
+    if (curr_hotend.empty() && cfg.has("default_hotend"))
+        curr_hotend = cfg.opt_string("default_hotend");
+    if (!curr_hotend.empty())
+        p->combo_hotend->SetStringSelection(wxString::FromUTF8(curr_hotend));
+    else if (p->combo_hotend->GetCount() > 0)
+        p->combo_hotend->SetSelection(0);
+
+    // Update head/hotend images to match current selection
+    if (p->image_print_head) {
+        std::string sel = p->combo_print_head->GetStringSelection().ToUTF8().data();
+        auto img = get_print_head_image(sel);
+        p->image_print_head->SetBitmap(create_scaled_bitmap(img, p->plater, PRINTER_THUMBNAIL_SIZE.GetHeight()));
+    }
+    if (p->image_hotend) {
+        std::string sel = p->combo_hotend->GetStringSelection().ToUTF8().data();
+        auto img = get_hotend_image(sel);
+        p->image_hotend->SetBitmap(create_scaled_bitmap(img, p->plater, PRINTER_THUMBNAIL_SIZE.GetHeight()));
+    }
+}
+
 void Sidebar::change_top_border_for_mode_sizer(bool increase_border)
 {
     // BBS
@@ -3743,6 +3994,28 @@ void Sidebar::msw_rescale()
     p->combo_printer->Rescale();
     p->combo_printer->SetMaxSize(wxSize(-1, FromDIP(30))); // limiting height makes badge visible
     p->btn_edit_printer->msw_rescale();
+
+    p->panel_print_head->SetMinSize(FromDIP(PRINTER_PANEL_SIZE));
+    p->panel_print_head->SetCornerRadius(FromDIP(PRINTER_PANEL_RADIUS));
+    p->combo_print_head->Rescale();
+    p->combo_print_head->SetMinSize(FromDIP(wxSize(18, -1)));
+    p->combo_print_head->SetMaxSize(FromDIP(wxSize(18, -1)));
+    if (p->image_print_head) {
+        std::string sel = p->combo_print_head->GetStringSelection().ToUTF8().data();
+        p->image_print_head->SetBitmap(create_scaled_bitmap(get_print_head_image(sel), this, PRINTER_THUMBNAIL_SIZE.GetHeight()));
+        p->image_print_head->SetSize(FromDIP(PRINTER_THUMBNAIL_SIZE));
+    }
+
+    p->panel_hotend->SetMinSize(FromDIP(PRINTER_PANEL_SIZE));
+    p->panel_hotend->SetCornerRadius(FromDIP(PRINTER_PANEL_RADIUS));
+    p->combo_hotend->Rescale();
+    p->combo_hotend->SetMinSize(FromDIP(wxSize(18, -1)));
+    p->combo_hotend->SetMaxSize(FromDIP(wxSize(18, -1)));
+    if (p->image_hotend) {
+        std::string sel = p->combo_hotend->GetStringSelection().ToUTF8().data();
+        p->image_hotend->SetBitmap(create_scaled_bitmap(get_hotend_image(sel), this, PRINTER_THUMBNAIL_SIZE.GetHeight()));
+        p->image_hotend->SetSize(FromDIP(PRINTER_THUMBNAIL_SIZE));
+    }
 
     p->panel_nozzle_dia->SetMinSize(FromDIP(PRINTER_PANEL_SIZE));
     p->panel_nozzle_dia->SetCornerRadius(FromDIP(PRINTER_PANEL_RADIUS));

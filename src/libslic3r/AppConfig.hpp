@@ -245,6 +245,11 @@ public:
         m_printer_settings[printer][name] = value;
         m_dirty = true;
     }
+    const nlohmann::json& get_printer_settings_object(const std::string& printer) const {
+        static const nlohmann::json empty_obj = nlohmann::json::object();
+        auto it = m_printer_settings.find(printer);
+        return it != m_printer_settings.end() ? it->second : empty_obj;
+    }
 
 	const std::map<std::string, BBLocalMachine>& get_local_machines() const { return m_local_machines; }
 	void erase_local_machine(std::string dev_id)

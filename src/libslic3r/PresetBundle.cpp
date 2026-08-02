@@ -2989,7 +2989,23 @@ void PresetBundle::export_selections(AppConfig &config)
         return;
     }
 
+    // Preserve user delta keys (head_delta.*, hotend_delta.*) across clear
+    std::vector<std::pair<std::string, std::string>> preserved_deltas;
+    if (config.has_printer_settings(printer_name)) {
+        auto& obj = config.get_printer_settings_object(printer_name);
+        for (auto it = obj.begin(); it != obj.end(); ++it) {
+            const auto& key = it.key();
+            if (key.rfind("head_delta.", 0) == 0 || key.rfind("hotend_delta.", 0) == 0)
+                preserved_deltas.emplace_back(key, it.value().get<std::string>());
+        }
+    }
+
     config.clear_printer_settings(printer_name);
+
+    // Restore preserved delta keys
+    for (const auto& [k, v] : preserved_deltas)
+        config.set_printer_setting(printer_name, k, v);
+
     config.set_printer_setting(printer_name, PRESET_PRINTER_NAME, printer_name);
     config.set_printer_setting(printer_name, PRESET_PRINT_NAME, prints.get_selected_preset_name());
     config.set_printer_setting(printer_name, PRESET_FILAMENT_NAME,     filament_presets.front());
