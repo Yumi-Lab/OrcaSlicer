@@ -1,9 +1,0 @@
-{
-    "type": "machine_model",
-    "name": "Yumi Classic",
-    "model_id": "YumiClassic",
-    "nozzle_diameter": "0.4;0.6;0.8",
-    "machine_tech": "FFF",
-    "family": "Yumi",
-    "default_materials": "Generic PLA @System;Generic PETG @System;Generic ABS @System"
-}
