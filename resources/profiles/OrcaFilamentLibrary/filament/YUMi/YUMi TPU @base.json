@@ -1,4 +1,25 @@
 {
+    "filament_density": [
+        "1.20"
+    ],
+    "nozzle_temperature": [
+        "230"
+    ],
+    "nozzle_temperature_initial_layer": [
+        "235"
+    ],
+    "filament_max_volumetric_speed": [
+        "3.6"
+    ],
+    "filament_retraction_length": [
+        "0.4"
+    ],
+    "filament_flow_ratio": [
+        "1.0"
+    ],
+    "filament_adaptive_volumetric_speed": [
+        "0"
+    ],
     "type": "filament",
     "name": "YUMi TPU @base",
     "inherits": "fdm_filament_tpu",
@@ -11,20 +32,11 @@
     "filament_type": [
         "TPU"
     ],
-    "filament_density": [
-        "1.20"
+    "nozzle_temperature_range_low": [
+        "220"
     ],
-    "filament_flow_ratio": [
-        "1.0"
-    ],
-    "filament_max_volumetric_speed": [
-        "3.6"
-    ],
-    "nozzle_temperature_initial_layer": [
-        "235"
-    ],
-    "nozzle_temperature": [
-        "230"
+    "nozzle_temperature_range_high": [
+        "250"
     ],
     "enable_pressure_advance": [
         "0"
