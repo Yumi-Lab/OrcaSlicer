@@ -1,9 +1,0 @@
-{
-    "type": "filament",
-    "name": "YUMI PLA HYPER @System",
-    "inherits": "YUMI PLA HYPER @base",
-    "from": "system",
-    "setting_id": "ialJxDbDyu29QXlN",
-    "instantiation": "true",
-    "compatible_printers": []
-}

@@ -1,60 +1,60 @@
 {
     "type": "filament",
-    "name": "YUMI FPLA+ @base",
+    "name": "YUMi PLA-CF @base",
     "inherits": "fdm_filament_pla",
     "from": "system",
-    "filament_id": "YUMI006",
+    "filament_id": "YUMi004",
     "instantiation": "false",
     "filament_vendor": [
-        "YUMI"
+        "YUMi"
     ],
     "filament_type": [
-        "PLA"
+        "PLA-CF"
     ],
     "filament_density": [
-        "1.25"
+        "1.18"
     ],
     "filament_flow_ratio": [
-        "1.0"
+        "0.98"
     ],
     "filament_max_volumetric_speed": [
-        "2.4"
+        "8"
     ],
     "nozzle_temperature_initial_layer": [
-        "210"
+        "190"
     ],
     "nozzle_temperature": [
-        "205"
+        "185"
     ],
     "enable_pressure_advance": [
         "0"
     ],
     "pressure_advance": [
-        "0.05"
+        "0.02"
     ],
-    "filament_notes": "PLA souple d'entree de gamme, a ne pas confondre avec le FPLA+ HR : buse plus froide, vitesse plafonnee a 60 mm/s, et il accepte un Bowden. La fiche indique un plateau non chauffe ; on met 50 C par defaut pour l'adherence, descendre a 0 est possible.\n\nProduit : PLA FLEXIBLE PLUS Premium\nValeurs officielles : buse 190-220 C, plateau 0 C (chauffage non necessaire), 20-60 mm/s, densite 1.21-1.30 g/cm3, buse 0.4 mm, Tg 54 C, compatible Bowden",
+    "filament_notes": "Buse 0.5 mm en ACIER obligatoire : la fibre de carbone use une buse laiton en quelques centaines de grammes. Plage de buse tres etroite (180-190 C), plus basse que la plupart des PLA charges du marche : c'est la valeur de la fiche produit officielle, ne pas l'aligner sur un PLA-CF generique.\n\nProduit : PLA HYPER YUMI FIBRE DE CARBONE\nValeurs officielles : buse 180-190 C, plateau 0-70 C, 20-300 mm/s, densite 1.18 g/cm3, buse 0.5 mm acier, Tg 60-65 C",
     "cool_plate_temp": [
-        "50"
+        "60"
     ],
     "cool_plate_temp_initial_layer": [
-        "50"
+        "60"
     ],
     "eng_plate_temp": [
-        "50"
+        "60"
     ],
     "eng_plate_temp_initial_layer": [
-        "50"
+        "60"
     ],
     "hot_plate_temp": [
-        "50"
+        "60"
     ],
     "hot_plate_temp_initial_layer": [
-        "50"
+        "60"
     ],
     "textured_plate_temp": [
-        "50"
+        "60"
     ],
     "textured_plate_temp_initial_layer": [
-        "50"
+        "60"
     ]
 }

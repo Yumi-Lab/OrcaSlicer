@@ -1,30 +1,30 @@
 {
     "type": "filament",
-    "name": "YUMI TPU @base",
-    "inherits": "fdm_filament_tpu",
+    "name": "YUMi FPLA+ @base",
+    "inherits": "fdm_filament_pla",
     "from": "system",
-    "filament_id": "YUMI008",
+    "filament_id": "YUMi006",
     "instantiation": "false",
     "filament_vendor": [
-        "YUMI"
+        "YUMi"
     ],
     "filament_type": [
-        "TPU"
+        "PLA"
     ],
     "filament_density": [
-        "1.20"
+        "1.25"
     ],
     "filament_flow_ratio": [
         "1.0"
     ],
     "filament_max_volumetric_speed": [
-        "3.6"
+        "2.4"
     ],
     "nozzle_temperature_initial_layer": [
-        "235"
+        "210"
     ],
     "nozzle_temperature": [
-        "230"
+        "205"
     ],
     "enable_pressure_advance": [
         "0"
@@ -32,7 +32,7 @@
     "pressure_advance": [
         "0.05"
     ],
-    "filament_notes": "Valeurs de la variante 95A. La boutique propose aussi 85A (plus souple) et 64D (plus rigide) : memes temperatures, adapter la vitesse. Incompatible Bowden en 85A. Vitesse 20-60 mm/s.\n\nProduit : TPU Flexible Premium 85A / 95A / 64D\nValeurs officielles : buse 220-250 C, plateau 0-60 C, 20-60 mm/s, densite 1.20 g/cm3, buse 0.5 mm",
+    "filament_notes": "PLA souple d'entree de gamme, a ne pas confondre avec le FPLA+ HR : buse plus froide, vitesse plafonnee a 60 mm/s, et il accepte un Bowden. La fiche indique un plateau non chauffe ; on met 50 C par defaut pour l'adherence, descendre a 0 est possible.\n\nProduit : PLA FLEXIBLE PLUS Premium\nValeurs officielles : buse 190-220 C, plateau 0 C (chauffage non necessaire), 20-60 mm/s, densite 1.21-1.30 g/cm3, buse 0.4 mm, Tg 54 C, compatible Bowden",
     "cool_plate_temp": [
         "50"
     ],

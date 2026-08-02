@@ -1,0 +1,9 @@
+{
+    "type": "filament",
+    "name": "YUMi PLA HYPER @System",
+    "inherits": "YUMi PLA HYPER @base",
+    "from": "system",
+    "setting_id": "qK91aFUNmwKXnXYu",
+    "instantiation": "true",
+    "compatible_printers": []
+}

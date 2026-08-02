@@ -1,9 +1,9 @@
 {
     "type": "filament",
-    "name": "YUMI FPLA+ @System",
-    "inherits": "YUMI FPLA+ @base",
+    "name": "YUMi TPU @System",
+    "inherits": "YUMi TPU @base",
     "from": "system",
-    "setting_id": "QuXsKzsClenhVhOb",
+    "setting_id": "bP6fVPBTWzQAd9fW",
     "instantiation": "true",
     "compatible_printers": []
 }

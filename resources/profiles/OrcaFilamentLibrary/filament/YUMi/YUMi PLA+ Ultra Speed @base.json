@@ -1,30 +1,30 @@
 {
     "type": "filament",
-    "name": "YUMI PLA HYPER @base",
+    "name": "YUMi PLA+ Ultra Speed @base",
     "inherits": "fdm_filament_pla",
     "from": "system",
-    "filament_id": "YUMI001",
+    "filament_id": "YUMi002",
     "instantiation": "false",
     "filament_vendor": [
-        "YUMI"
+        "YUMi"
     ],
     "filament_type": [
         "PLA"
     ],
     "filament_density": [
-        "1.24"
+        "1.34"
     ],
     "filament_flow_ratio": [
         "0.98"
     ],
     "filament_max_volumetric_speed": [
-        "15"
+        "21"
     ],
     "nozzle_temperature_initial_layer": [
-        "215"
+        "235"
     ],
     "nozzle_temperature": [
-        "210"
+        "230"
     ],
     "enable_pressure_advance": [
         "0"
@@ -32,7 +32,7 @@
     "pressure_advance": [
         "0.02"
     ],
-    "filament_notes": "Ligne principale YUMI. Refroidissement necessaire.\n\nProduit : PLA HYPER YUMI\nValeurs officielles : buse 185-220 C, plateau 0-70 C, 20-300 mm/s, densite 1.24 g/cm3, buse 0.4 mm, Tg 58-62 C",
+    "filament_notes": "PLA+ haute vitesse. Temperature de buse nettement plus elevee que le PLA HYPER : c'est ce qui permet le debit. Debit volumetrique releve a 21 mm3/s.\n\nProduit : PLA+ Ultra Speed YUMI\nValeurs officielles : buse 210-260 C, plateau 0-70 C, 20-1200 mm/s, densite 1.34 g/cm3, buse 0.4 mm, Tg 58-62 C",
     "cool_plate_temp": [
         "60"
     ],
