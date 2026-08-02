@@ -1,12 +1,12 @@
 {
     "type": "filament",
-    "name": "YUMI PLA+ Ultra Speed @base",
+    "name": "YUMi PLA+ Ultra Speed @base",
     "inherits": "fdm_filament_pla",
     "from": "system",
-    "filament_id": "YUMI002",
+    "filament_id": "YUMi002",
     "instantiation": "false",
     "filament_vendor": [
-        "YUMI"
+        "YUMi"
     ],
     "filament_type": [
         "PLA"

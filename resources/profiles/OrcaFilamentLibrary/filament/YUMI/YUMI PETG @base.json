@@ -1,12 +1,12 @@
 {
     "type": "filament",
-    "name": "YUMI PETG @base",
+    "name": "YUMi PETG @base",
     "inherits": "fdm_filament_pet",
     "from": "system",
-    "filament_id": "YUMI003",
+    "filament_id": "YUMi003",
     "instantiation": "false",
     "filament_vendor": [
-        "YUMI"
+        "YUMi"
     ],
     "filament_type": [
         "PETG"

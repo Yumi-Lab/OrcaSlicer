@@ -1,9 +1,9 @@
 {
     "type": "filament",
-    "name": "YUMI PLA+ Ultra Speed @System",
-    "inherits": "YUMI PLA+ Ultra Speed @base",
+    "name": "YUMi PLA+ Ultra Speed @System",
+    "inherits": "YUMi PLA+ Ultra Speed @base",
     "from": "system",
-    "setting_id": "5ljIPqytlmGgZo5d",
+    "setting_id": "jULR3GnZfXkR1KVk",
     "instantiation": "true",
     "compatible_printers": []
 }

@@ -1,12 +1,12 @@
 {
     "type": "filament",
-    "name": "YUMI TPU @base",
+    "name": "YUMi TPU @base",
     "inherits": "fdm_filament_tpu",
     "from": "system",
-    "filament_id": "YUMI008",
+    "filament_id": "YUMi008",
     "instantiation": "false",
     "filament_vendor": [
-        "YUMI"
+        "YUMi"
     ],
     "filament_type": [
         "TPU"

@@ -1,12 +1,12 @@
 {
     "type": "filament",
-    "name": "YUMI PLA-CF @base",
+    "name": "YUMi PLA-CF @base",
     "inherits": "fdm_filament_pla",
     "from": "system",
-    "filament_id": "YUMI004",
+    "filament_id": "YUMi004",
     "instantiation": "false",
     "filament_vendor": [
-        "YUMI"
+        "YUMi"
     ],
     "filament_type": [
         "PLA-CF"

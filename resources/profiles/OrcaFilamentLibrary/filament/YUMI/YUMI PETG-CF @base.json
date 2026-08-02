@@ -1,12 +1,12 @@
 {
     "type": "filament",
-    "name": "YUMI PETG-CF @base",
+    "name": "YUMi PETG-CF @base",
     "inherits": "fdm_filament_pet",
     "from": "system",
-    "filament_id": "YUMI005",
+    "filament_id": "YUMi005",
     "instantiation": "false",
     "filament_vendor": [
-        "YUMI"
+        "YUMi"
     ],
     "filament_type": [
         "PETG-CF"

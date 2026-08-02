@@ -1,9 +1,9 @@
 {
     "type": "filament",
-    "name": "YUMI FPLA+ HR @System",
-    "inherits": "YUMI FPLA+ HR @base",
+    "name": "YUMi FPLA+ HR @System",
+    "inherits": "YUMi FPLA+ HR @base",
     "from": "system",
-    "setting_id": "lvGTqALs9CrlTzRv",
+    "setting_id": "BYKcLewOqMTCp7We",
     "instantiation": "true",
     "compatible_printers": []
 }

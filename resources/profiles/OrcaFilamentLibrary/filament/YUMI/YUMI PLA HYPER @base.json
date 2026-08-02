@@ -1,12 +1,12 @@
 {
     "type": "filament",
-    "name": "YUMI PLA HYPER @base",
+    "name": "YUMi PLA HYPER @base",
     "inherits": "fdm_filament_pla",
     "from": "system",
-    "filament_id": "YUMI001",
+    "filament_id": "YUMi001",
     "instantiation": "false",
     "filament_vendor": [
-        "YUMI"
+        "YUMi"
     ],
     "filament_type": [
         "PLA"
