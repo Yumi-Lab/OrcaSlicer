@@ -1,0 +1,12 @@
+{
+    "type": "process",
+    "name": "0.10mm Standard @YUMi 0.2 nozzle",
+    "inherits": "fdm_process_yumi_common_0_2",
+    "from": "system",
+    "setting_id": "FoYr6IQrv1FGlUt9",
+    "instantiation": "true",
+    "layer_height": "0.10",
+    "initial_layer_print_height": "0.12",
+    "bottom_shell_layers": "3",
+    "top_shell_layers": "4"
+}
