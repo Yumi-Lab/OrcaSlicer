@@ -1,0 +1,60 @@
+{
+    "type": "filament",
+    "name": "YUMI PETG @base",
+    "inherits": "fdm_filament_pet",
+    "from": "system",
+    "filament_id": "YUMI003",
+    "instantiation": "false",
+    "filament_vendor": [
+        "YUMI"
+    ],
+    "filament_type": [
+        "PETG"
+    ],
+    "filament_density": [
+        "1.27"
+    ],
+    "filament_flow_ratio": [
+        "0.95"
+    ],
+    "filament_max_volumetric_speed": [
+        "12"
+    ],
+    "nozzle_temperature_initial_layer": [
+        "245"
+    ],
+    "nozzle_temperature": [
+        "240"
+    ],
+    "enable_pressure_advance": [
+        "0"
+    ],
+    "pressure_advance": [
+        "0.04"
+    ],
+    "filament_notes": "Produit : PETG Yumi Premium\nValeurs officielles : buse 220-260 C, plateau 40-70 C, 20-300 mm/s, densite 1.27 g/cm3, buse 0.4 mm, Tg 70-75 C",
+    "cool_plate_temp": [
+        "70"
+    ],
+    "cool_plate_temp_initial_layer": [
+        "70"
+    ],
+    "eng_plate_temp": [
+        "70"
+    ],
+    "eng_plate_temp_initial_layer": [
+        "70"
+    ],
+    "hot_plate_temp": [
+        "70"
+    ],
+    "hot_plate_temp_initial_layer": [
+        "70"
+    ],
+    "textured_plate_temp": [
+        "70"
+    ],
+    "textured_plate_temp_initial_layer": [
+        "70"
+    ]
+}
