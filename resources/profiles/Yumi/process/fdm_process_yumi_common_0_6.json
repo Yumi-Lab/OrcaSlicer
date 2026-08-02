@@ -1,0 +1,16 @@
+{
+    "type": "process",
+    "name": "fdm_process_yumi_common_0_6",
+    "inherits": "fdm_process_yumi_common",
+    "from": "system",
+    "instantiation": "false",
+    "compatible_printers_condition": "printer_notes=~/.*PRINTER_MODEL_YUMI_C_SERIES.*/ and nozzle_diameter[0]==0.6",
+    "line_width": "0.60",
+    "initial_layer_line_width": "0.67",
+    "outer_wall_line_width": "0.60",
+    "inner_wall_line_width": "0.67",
+    "sparse_infill_line_width": "0.67",
+    "internal_solid_infill_line_width": "0.60",
+    "top_surface_line_width": "0.60",
+    "support_line_width": "0.60"
+}
