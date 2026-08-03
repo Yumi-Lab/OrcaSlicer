@@ -1,0 +1,9 @@
+{
+    "type": "machine_model",
+    "name": "YUMi C235 ToolChanger",
+    "model_id": "YUMiC235TC",
+    "nozzle_diameter": "0.4",
+    "machine_tech": "FFF",
+    "family": "YUMi",
+    "default_materials": "Generic PLA @System;Generic PETG @System"
+}
