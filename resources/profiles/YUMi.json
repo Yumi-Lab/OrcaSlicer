@@ -15,10 +15,6 @@
         {
             "name": "YUMi C435",
             "sub_path": "machine/YUMi C435.json"
-        },
-        {
-            "name": "YUMi C235 ToolChanger",
-            "sub_path": "machine/YUMi C235 ToolChanger.json"
         }
     ],
     "process_list": [
@@ -180,10 +176,6 @@
         {
             "name": "YUMi C435 0.4 nozzle",
             "sub_path": "machine/YUMi C435 0.4 nozzle.json"
-        },
-        {
-            "name": "YUMi C235 ToolChanger 0.4 nozzle",
-            "sub_path": "machine/YUMi C235 ToolChanger 0.4 nozzle.json"
         }
     ]
 }

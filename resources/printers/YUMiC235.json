@@ -4,8 +4,8 @@
             "0": {
                 "extruder": [
                     "ChromaX12 Extruder",
-                    "ChromaX12 extruder",
-                    "ChromaX12 extruder"
+                    "ChromaX12 Extruder",
+                    "ChromaX12 Extruder"
                 ],
                 "nozzle": [
                     "ChromaX12",
@@ -14,15 +14,15 @@
                 ],
                 "hotend": [
                     "ChromaX12 Hotend",
-                    "ChromaX12 hotend",
-                    "ChromaX12 hotend"
+                    "ChromaX12 Hotend",
+                    "ChromaX12 Hotend"
                 ]
             },
             "1": {
                 "extruder": [
                     "DirectDrive Extruder",
-                    "DirectDrive extruder",
-                    "DirectDrive extruder"
+                    "DirectDrive Extruder",
+                    "DirectDrive Extruder"
                 ],
                 "nozzle": [
                     "DirectDrive",
@@ -31,8 +31,8 @@
                 ],
                 "hotend": [
                     "DirectDrive Hotend",
-                    "DirectDrive hotend",
-                    "DirectDrive hotend"
+                    "DirectDrive Hotend",
+                    "DirectDrive Hotend"
                 ]
             }
         }

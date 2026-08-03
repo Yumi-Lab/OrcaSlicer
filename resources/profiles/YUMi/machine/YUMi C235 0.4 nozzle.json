@@ -17,9 +17,77 @@
     "printable_height": "270",
     "bed_exclude_area": [],
     "max_layer_height": [
+        "0.9",
         "0.9"
     ],
     "min_layer_height": [
+        "0.05",
         "0.05"
+    ],
+    "nozzle_diameter": [
+        "0.4",
+        "0.4"
+    ],
+    "extruder_type": [
+        "Direct Drive",
+        "Direct Drive"
+    ],
+    "extruder_variant_list": [
+        "Direct Drive Standard,Direct Drive High Flow",
+        "Direct Drive Standard,Direct Drive High Flow"
+    ],
+    "default_nozzle_volume_type": [
+        "Standard",
+        "Standard"
+    ],
+    "printer_extruder_id": [
+        "1",
+        "1",
+        "2",
+        "2"
+    ],
+    "printer_extruder_variant": [
+        "Direct Drive Standard",
+        "Direct Drive High Flow",
+        "Direct Drive Standard",
+        "Direct Drive High Flow"
+    ],
+    "physical_extruder_map": [
+        "0",
+        "1"
+    ],
+    "master_extruder_id": "1",
+    "extruder_offset": [
+        "0x0",
+        "0x0"
+    ],
+    "extruder_printable_area": [
+        "0x0,235x0,235x235,0x235",
+        "0x0,235x0,235x235,0x235"
+    ],
+    "extruder_printable_height": [
+        "270",
+        "270"
+    ],
+    "grab_length": [
+        "0",
+        "0"
+    ],
+    "single_extruder_multi_material": "0",
+    "retraction_length": [
+        "4.0",
+        "0.8"
+    ],
+    "retraction_speed": [
+        "40",
+        "30"
+    ],
+    "deretraction_speed": [
+        "25",
+        "25"
+    ],
+    "z_hop": [
+        "0.4",
+        "0.4"
     ]
 }
