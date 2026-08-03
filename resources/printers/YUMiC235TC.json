@@ -1,0 +1,40 @@
+{
+    "00.00.00.00": {
+        "tool_head_display_names": {
+            "0": {
+                "extruder": [
+                    "ChromaX12 Extruder",
+                    "ChromaX12 extruder",
+                    "ChromaX12 extruder"
+                ],
+                "nozzle": [
+                    "ChromaX12",
+                    "ChromaX12",
+                    "ChromaX12"
+                ],
+                "hotend": [
+                    "ChromaX12 Hotend",
+                    "ChromaX12 hotend",
+                    "ChromaX12 hotend"
+                ]
+            },
+            "1": {
+                "extruder": [
+                    "DirectDrive Extruder",
+                    "DirectDrive extruder",
+                    "DirectDrive extruder"
+                ],
+                "nozzle": [
+                    "DirectDrive",
+                    "DirectDrive",
+                    "DirectDrive"
+                ],
+                "hotend": [
+                    "DirectDrive Hotend",
+                    "DirectDrive hotend",
+                    "DirectDrive hotend"
+                ]
+            }
+        }
+    }
+}
