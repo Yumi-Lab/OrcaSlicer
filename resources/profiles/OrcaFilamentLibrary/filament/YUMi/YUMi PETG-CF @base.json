@@ -1,38 +1,4 @@
 {
-    "type": "filament",
-    "name": "YUMi PETG-CF @base",
-    "inherits": "fdm_filament_pet",
-    "from": "system",
-    "filament_id": "YUMi005",
-    "instantiation": "false",
-    "filament_vendor": [
-        "YUMi"
-    ],
-    "filament_type": [
-        "PETG-CF"
-    ],
-    "filament_density": [
-        "1.27"
-    ],
-    "filament_flow_ratio": [
-        "1.0"
-    ],
-    "filament_max_volumetric_speed": [
-        "10"
-    ],
-    "nozzle_temperature_initial_layer": [
-        "245"
-    ],
-    "nozzle_temperature": [
-        "240"
-    ],
-    "enable_pressure_advance": [
-        "0"
-    ],
-    "pressure_advance": [
-        "0.045"
-    ],
-    "filament_notes": "Buse 0.5 mm en ACIER obligatoire.\n\nProduit : PETG Premium FIBRE DE CARBONE\nValeurs officielles : buse 220-260 C, plateau 40-70 C, 20-300 mm/s, densite 1.27 g/cm3, buse 0.5 mm acier, Tg 70-75 C",
     "cool_plate_temp": [
         "70"
     ],
@@ -45,10 +11,46 @@
     "eng_plate_temp_initial_layer": [
         "70"
     ],
+    "fan_max_speed": [
+        "40"
+    ],
+    "fan_min_speed": [
+        "5"
+    ],
+    "filament_density": [
+        "1.27"
+    ],
+    "filament_flow_ratio": [
+        "1.0"
+    ],
+    "filament_max_volumetric_speed": [
+        "10"
+    ],
     "hot_plate_temp": [
         "70"
     ],
     "hot_plate_temp_initial_layer": [
+        "70"
+    ],
+    "nozzle_temperature_range_high": [
+        "260"
+    ],
+    "nozzle_temperature_range_low": [
+        "220"
+    ],
+    "overhang_fan_speed": [
+        "100"
+    ],
+    "overhang_fan_threshold": [
+        "10%"
+    ],
+    "required_nozzle_HRC": [
+        "40"
+    ],
+    "slow_down_layer_time": [
+        "6"
+    ],
+    "temperature_vitrification": [
         "70"
     ],
     "textured_plate_temp": [
@@ -56,5 +58,36 @@
     ],
     "textured_plate_temp_initial_layer": [
         "70"
-    ]
+    ],
+    "fan_cooling_layer_time": [
+        "30"
+    ],
+    "filament_adaptive_volumetric_speed": [
+        "0"
+    ],
+    "nozzle_temperature": [
+        "240"
+    ],
+    "nozzle_temperature_initial_layer": [
+        "245"
+    ],
+    "type": "filament",
+    "name": "YUMi PETG-CF @base",
+    "inherits": "fdm_filament_pet",
+    "from": "system",
+    "filament_id": "YUMi005",
+    "instantiation": "false",
+    "filament_vendor": [
+        "YUMi"
+    ],
+    "filament_type": [
+        "PETG-CF"
+    ],
+    "enable_pressure_advance": [
+        "0"
+    ],
+    "pressure_advance": [
+        "0.045"
+    ],
+    "filament_notes": "Buse 0.5 mm en ACIER obligatoire.\n\nProduit : PETG Premium FIBRE DE CARBONE\nValeurs officielles : buse 220-260 C, plateau 40-70 C, 20-300 mm/s, densite 1.27 g/cm3, buse 0.5 mm acier, Tg 70-75 C"
 }
